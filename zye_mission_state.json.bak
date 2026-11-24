@@ -1,0 +1,10 @@
+{
+  "mission": "NORMAL_ASSISTANT",
+  "risk_tolerance": "MODERATE",
+  "resource_budget": "BALANCED",
+  "custom_objective": "Emergency reflex: RAM overload relief (low-resource mode)",
+  "updated_at": "2026-11-24T09:07:25.400925+00:00",
+  "previous_mission": "EMERGENCY_LOCKDOWN",
+  "transition_reason": "Transition to NORMAL_ASSISTANT",
+  "configuration_version": "1.0.0"
+}

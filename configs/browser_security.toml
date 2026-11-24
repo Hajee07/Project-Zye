@@ -1,0 +1,20 @@
+# Zye AI — Browser Security Configuration (Day 24)
+
+[browser.security]
+allow_javascript_urls = false
+allow_file_urls = false
+allow_data_urls = false
+require_valid_http_https = true
+block_credential_extraction = true
+block_cookie_extraction = true
+block_password_extraction = true
+require_account_selection = true
+require_ambiguous_click_confirmation = true
+max_keys_per_interaction = 20
+
+[browser.security.content]
+treat_web_content_as_untrusted = true
+block_unrestricted_script_execution = true
+block_hidden_content_extraction = true
+redact_sensitive_credentials = true
+prompt_injection_defense_enabled = true

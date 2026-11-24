@@ -1,0 +1,229 @@
+{
+  "council_id": "council_1795210351_c40266",
+  "mode": "QUICK",
+  "status": "completed",
+  "success": true,
+  "question": "What web framework should we use?",
+  "total_queried": 2,
+  "successful_count": 2,
+  "execution_time_ms": 2.74,
+  "participants": [
+    {
+      "provider_id": "chatgpt",
+      "model": "gpt-4o",
+      "status": "success",
+      "content": "ChatGPT recommendation: Use FastAPI for microservices.",
+      "latency_ms": 150.0,
+      "usage": {
+        "input_tokens": 20,
+        "output_tokens": 10,
+        "total_tokens": 30,
+        "latency_ms": 150.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    },
+    {
+      "provider_id": "claude",
+      "model": "claude-3-5-sonnet-20241022",
+      "status": "success",
+      "content": "Claude recommendation: Consider async performance and Pydantic v2.",
+      "latency_ms": 210.0,
+      "usage": {
+        "input_tokens": 25,
+        "output_tokens": 12,
+        "total_tokens": 37,
+        "latency_ms": 210.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    }
+  ],
+  "perspectives": {
+    "chatgpt": {
+      "provider_id": "chatgpt",
+      "model": "gpt-4o",
+      "status": "success",
+      "content": "ChatGPT recommendation: Use FastAPI for microservices.",
+      "latency_ms": 150.0,
+      "usage": {
+        "input_tokens": 20,
+        "output_tokens": 10,
+        "total_tokens": 30,
+        "latency_ms": 150.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    },
+    "claude": {
+      "provider_id": "claude",
+      "model": "claude-3-5-sonnet-20241022",
+      "status": "success",
+      "content": "Claude recommendation: Consider async performance and Pydantic v2.",
+      "latency_ms": 210.0,
+      "usage": {
+        "input_tokens": 25,
+        "output_tokens": 12,
+        "total_tokens": 37,
+        "latency_ms": 210.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    }
+  },
+  "comparison": {
+    "agreements": [],
+    "disagreements": [],
+    "minority_arguments": [
+      {
+        "topic": "performance",
+        "summary": "ChatGPT recommendation: Use FastAPI for microservices.",
+        "provider_id": "chatgpt",
+        "claim_type": "technical"
+      },
+      {
+        "topic": "performance",
+        "summary": "Claude recommendation: Consider async performance and Pydantic v2.",
+        "provider_id": "claude",
+        "claim_type": "technical"
+      }
+    ]
+  },
+  "consensus": {
+    "consensus_status": "NO_AGREEMENT",
+    "agreement_score": 0.0,
+    "shared_points_count": 0,
+    "shared_points": [],
+    "minority_positions_count": 2,
+    "minority_positions": [
+      {
+        "topic": "performance",
+        "summary": "ChatGPT recommendation: Use FastAPI for microservices.",
+        "provider_id": "chatgpt",
+        "claim_type": "technical"
+      },
+      {
+        "topic": "performance",
+        "summary": "Claude recommendation: Consider async performance and Pydantic v2.",
+        "provider_id": "claude",
+        "claim_type": "technical"
+      }
+    ],
+    "critical_disagreements_count": 0,
+    "unresolved_issues": [],
+    "signal_caveat": "Consensus reflects shared model heuristics and training overlap; not independent mathematical verification."
+  },
+  "evaluation": {
+    "decision_id": "dec_76778bd1",
+    "priority_mode": "BALANCED",
+    "criteria_weights": {
+      "reliability": 0.2,
+      "correctness": 0.2,
+      "safety": 0.2,
+      "performance": 0.15,
+      "maintainability": 0.1,
+      "simplicity": 0.1,
+      "compatibility": 0.05
+    },
+    "total_candidates": 2,
+    "ranked_solutions": [
+      {
+        "rank": 1,
+        "solution_id": "chatgpt",
+        "title": "Chatgpt Architecture Proposal",
+        "provider_id": "chatgpt",
+        "composite_score": 0.735,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.85,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [],
+        "cons": [],
+        "unresolved_risks": []
+      },
+      {
+        "rank": 2,
+        "solution_id": "claude",
+        "title": "Claude Architecture Proposal",
+        "provider_id": "claude",
+        "composite_score": 0.735,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.85,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [],
+        "cons": [],
+        "unresolved_risks": []
+      }
+    ],
+    "recommended_solution": "chatgpt",
+    "top_score": 0.735,
+    "score_separation": 0.0,
+    "is_provisional": true
+  },
+  "evidence": {
+    "chatgpt": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    },
+    "claude": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    }
+  },
+  "cross_critiques": {},
+  "final_decision": {
+    "verdict_category": "HYBRID_SOLUTION",
+    "selected_solution": "Chatgpt Architecture Path",
+    "reasoning": [
+      "Multi-criteria decision analysis scored top candidate at 0.735.",
+      "Consensus status resolved as NO_AGREEMENT.",
+      "Disagreements identified: 0 (0 critical)."
+    ],
+    "unresolved_risks": [],
+    "supreme_arbiter": "Gemini Master Brain (Authoritative Verdict Ready)"
+  },
+  "synthesis_prompt_ready": "=== AI COUNCIL SUPREME ARBITER DOSSIER ===\nOriginal Question: What web framework should we use?\nCouncil Quorum: 2 models queried.\n\n--- INDEPENDENT MODEL PROPOSALS ---\n\n[CHATGPT (Model: gpt-4o, Latency: 150.0ms) - Chatgpt recommendation]:\nChatGPT recommendation: Use FastAPI for microservices.\n\n\n[CLAUDE (Model: claude-3-5-sonnet-20241022, Latency: 210.0ms) - Claude recommendation]:\nClaude recommendation: Consider async performance and Pydantic v2.\n\n\n--- DISAGREEMENT MATRIX ---\nNo critical contradictions detected.\n\n--- MULTI-CRITERIA DECISION SCORING ---\n- Rank 1: Chatgpt Architecture Proposal (Composite Score: 0.735)\n- Rank 2: Claude Architecture Proposal (Composite Score: 0.735)\n\n--- SUPREME ARBITER INSTRUCTIONS FOR GEMINI MASTER BRAIN ---\nGemini Master Brain is the Supreme Arbiter and sole voice of Zye AI. Review the independent proposals, cross-critiques, and decision ranking above. Reconcile technical disagreements, reject false premises, and synthesize the definitive, authoritative recommendation for the user. Speak the final verdict directly via Edge-TTS (en-IN-NeerjaNeural)."
+}

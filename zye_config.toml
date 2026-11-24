@@ -1,0 +1,999 @@
+# =============================================================================
+# ZYE AI — Master Configuration
+# =============================================================================
+# This file defines all system settings, feature flags, security policies,
+# and path configurations for the Zye AI assistant.
+# =============================================================================
+
+[system]
+assistant_name = "Zye"
+version = "0.1.0"
+default_mission = "NORMAL_ASSISTANT"
+min_free_disk_gb = 3.0
+min_free_ram_gb = 1.5
+
+[ai]
+primary_provider = "gemini"
+local_provider = "ollama"
+model_routing_mode = "policy_based"
+cloud_fallback_enabled = true
+structured_output_enabled = true
+request_timeout_seconds = 60
+
+[ai.privacy]
+local_first_for_private_data = true
+redact_sensitive_data = true
+send_files_to_cloud_by_default = false
+require_explicit_cloud_upload = true
+
+[features]
+enable_smart_home = false
+enable_background_watchdog = true
+enable_meeting_reminders = true
+enable_memory = false
+enable_camera = false
+enable_autonomous_execution = false
+
+[security]
+allow_arbitrary_shell_execution = false
+allow_arbitrary_python_execution = false
+require_tool_validation = true
+require_action_audit = true
+fail_closed_on_permission_error = true
+
+[security.permissions]
+read_operations = true
+reversible_file_operations = true
+external_message_sending_requires_confirmation = true
+file_deletion_requires_confirmation = true
+system_configuration_changes_require_confirmation = true
+
+[performance]
+max_concurrent_tasks = 3
+default_task_timeout_seconds = 60
+max_retry_attempts = 2
+
+[audio]
+enabled = true
+sample_rate = 16000
+channels = 1
+sample_format = "float32"
+frame_duration_ms = 32
+pre_roll_seconds = 0.96
+silence_timeout_seconds = 1.85
+maximum_record_seconds = 25.0
+minimum_record_seconds = 0.40
+maximum_queue_frames = 64
+noise_floor_initial = 0.008
+vad_mode = "silero_onnx"
+preferred_device_index = -1
+chunk_size = 512
+silence_timeout_sec = 1.85
+pre_roll_chunks = 30
+vad_start_threshold = 0.48
+vad_hold_threshold = 0.40
+tts_voice = "en-IN-NeerjaNeural"
+
+[audio.agc]
+enabled = true
+mode = "peak_normalize"
+target_peak = 0.85
+max_gain = 12.0
+min_gain = 0.50
+silence_threshold = 0.00001
+target_rms = 0.12
+window_ms = 20
+hop_ms = 10
+attack_ms = 10.0
+release_ms = 250.0
+limiter_peak = 0.95
+adaptive_mode_enabled = false
+
+[audio.chimes]
+enabled = true
+start_first_frequency = 540.0
+start_second_frequency = 820.0
+stop_first_frequency = 780.0
+stop_second_frequency = 480.0
+tone_duration_ms = 75.0
+amplitude = 0.12
+fade_duration_ms = 12.5
+vad_guard_ms = 250.0
+max_queue_size = 4
+
+[neural_vad]
+enabled = true
+backend = "silero_onnx"
+fallback_backend = "adaptive_rms"
+start_threshold = 0.52
+hold_threshold = 0.40
+start_confirmation_frames = 2
+inference_device = "cpu"
+warmup_enabled = true
+auto_fallback = true
+maximum_consecutive_inference_errors = 3
+
+[observability]
+structured_logging = true
+redact_secrets = true
+enable_debug_mode = false
+
+[paths]
+skills_dir = "skills"
+data_dir = "data"
+logs_dir = "logs"
+backups_dir = "backups"
+profiles_dir = "profiles"
+
+[tts]
+enabled = true
+voice = "en-IN-NeerjaNeural"
+rate = "+0%"
+volume = "+0%"
+pitch = "+0Hz"
+timeout_seconds = 15.0
+playback_enabled = true
+playback_volume = 1.0
+
+[text_input]
+enabled = true
+hotkey = "alt+z"
+input_timeout_seconds = 60.0
+max_input_length = 2000
+
+[voice.tts]
+enabled = true
+provider = "edge_tts"
+voice = "en-IN-NeerjaNeural"
+format = "mp3"
+timeout_seconds = 30
+max_retries = 1
+retry_delay_seconds = 1.0
+max_text_chars = 4000
+
+[voice.playback]
+enabled = true
+mixer_frequency = 44100
+mixer_size = -16
+mixer_channels = 2
+mixer_buffer = 512
+poll_interval_seconds = 0.05
+
+[voice.hotkey]
+enabled = true
+shortcut = "alt+z"
+fallback_to_terminal = true
+
+[voice.clarity]
+enabled = true
+strict_mode = true
+reject_empty_audio = true
+reject_malformed_wav = true
+block_tools_when_unclear = true
+clarification_message = "Konjam clear-ah kekkala, thirumba solreengala?"
+
+[voice.loop]
+silence_timeout = 1.25
+max_record_seconds = 25.0
+max_history_turns = 16
+max_tool_rounds = 8
+
+[voice.privacy]
+allow_cloud_tts = true
+log_raw_audio = false
+save_microphone_recordings = false
+
+[voice.fallback]
+text_mode_enabled = true
+console_output_enabled = true
+tts_failure_text_fallback = true
+
+# =============================================================================
+# DAY 11 — AUTONOMOUS INTELLIGENCE & DUAL-BRAIN DECISION SYSTEM
+# =============================================================================
+
+[autonomy]
+enabled = true
+strict_premortem = true
+require_audit_for_mutating_tools = true
+max_audit_retries = 1
+max_tool_rounds = 8
+
+[autonomy.premortem]
+model = "gemini-2.5-flash"
+temperature = 0.2
+include_system_preflight = true
+include_file_diagnostics = true
+include_fmea = true
+report_residual_risks = true
+
+[autonomy.decision_matrix]
+enabled = true
+default_priority = "balanced"
+generate_alternatives = true
+max_candidates = 4
+
+[autonomy.missions]
+default_mission = "NORMAL_ASSISTANT"
+automatic_suggestion = true
+automatic_switching = true
+
+[autonomy.watchdog]
+enabled = true
+interval_seconds = 25
+ram_warning_pct = 95
+disk_warning_pct = 92
+battery_warning_pct = 15
+battery_critical_pct = 8
+error_log_tail_lines = 15
+alert_cooldown_seconds = 600
+
+[autonomy.emergency]
+battery_reflex_enabled = true
+ram_reflex_enabled = true
+cyber_lockdown_enabled = true
+allow_arbitrary_commands = false
+require_verified_security_signal = true
+
+[autonomy.execution]
+require_confirmation_for_delete = true
+require_confirmation_for_irreversible_overwrite = true
+require_confirmation_for_external_email = true
+require_confirmation_for_disruptive_network_changes = true
+revalidate_before_execution = true
+verify_after_execution = true
+
+# =============================================================================
+# DAY 12 — MASTER MCP ORCHESTRATION ENGINE & HOT RELOAD
+# =============================================================================
+
+[mcp_orchestrator]
+enabled = true
+startup_timeout_seconds = 20
+tool_timeout_seconds = 30
+max_tool_rounds = 8
+max_parallel_startups = 4
+max_parallel_tool_calls = 4
+health_check_interval_seconds = 30
+reload_drain_timeout_seconds = 15
+registry_atomic_swap = true
+allow_optional_server_failure = true
+
+[mcp_orchestrator.recovery]
+enabled = true
+max_restart_attempts = 2
+initial_backoff_seconds = 1
+max_backoff_seconds = 15
+circuit_breaker_enabled = true
+
+[mcp_orchestrator.hot_reload]
+enabled = true
+staged_reload_preferred = true
+require_candidate_validation = true
+require_schema_refresh = true
+require_health_verification = true
+
+[mcp_orchestrator.execution]
+negative_premortem_required_for_file_system = true
+negative_premortem_required_for_system_tools = true
+revalidate_before_execution = true
+block_if_premortem_unavailable = true
+
+[mcp_orchestrator.logging]
+enabled = true
+max_log_size_mb = 10
+backup_count = 5
+
+# =============================================================================
+# DAY 13 — AUTONOMOUS INTELLIGENCE CORE
+# =============================================================================
+
+[autonomous_brain]
+enabled = true
+model = "gemini-2.5-flash"
+temperature = 0.2
+audit_timeout_seconds = 45
+require_structured_output = true
+block_protected_actions_if_audit_fails = true
+
+[autonomous_brain.preflight]
+enabled = true
+inspect_ram = true
+inspect_disk = true
+inspect_cpu = true
+inspect_battery = true
+inspect_target_files = true
+ram_high_threshold = 95
+disk_high_threshold = 92
+battery_warning_threshold = 15
+battery_critical_threshold = 8
+
+[autonomous_brain.decision_matrix]
+default_priority_mode = "balanced"
+generate_multiple_solutions = true
+require_safety_validation = true
+
+[autonomous_brain.mission]
+default_mission = "NORMAL_ASSISTANT"
+persist_state = true
+enable_context_switching = true
+
+[autonomous_brain.watchdog]
+enabled = true
+interval_seconds = 25
+deduplicate_alerts = true
+maximum_retry_attempts = 2
+
+[autonomous_brain.emergency]
+battery_reflex_enabled = true
+ram_reflex_enabled = true
+cyber_lockdown_enabled = false
+require_authorization_for_high_impact_actions = true
+
+[autonomous_brain.logging]
+enabled = true
+max_log_size_mb = 10
+backup_count = 5
+
+# =============================================================================
+# MULTI-PROJECT GEMINI INTELLIGENCE INFRASTRUCTURE v2.0
+# =============================================================================
+
+[gemini]
+enabled = true
+provider = "google"
+model_id = "gemini-3.5-flash-lite"
+thinking_mode = "MANUAL"
+thinking_level = "LOW"
+default_thinking_level = "LOW"
+
+[gemini.key_management]
+total_slots = 7
+secret_source = "environment"
+
+[gemini.routing]
+strategy = "WORKLOAD_ASSIGNED_PROJECT"
+default_concurrency = 1
+max_logical_workers = 7
+cross_project_quota_fallback = false
+cross_project_quota_pooling = false
+
+[gemini.optimization]
+local_first = true
+prompt_compression = true
+response_cache = true
+context_cache = true
+
+[gemini.usage]
+track_input_tokens = true
+track_output_tokens = true
+track_thinking_tokens = true
+daily_budget_enabled = true
+monthly_budget_enabled = true
+
+[gemini.security]
+mask_api_keys = true
+never_log_secrets = true
+require_project_mapping = true
+require_negative_brain = true
+
+[gemini.recovery]
+retry_enabled = true
+max_retries = 3
+exponential_backoff = true
+respect_retry_after = true
+
+[gemini_live]
+enabled = true
+provider = "gemini"
+mode = "native_audio"
+model = "gemini-3.8-live"
+fallback_model = "gemini-3.1-flash-live-preview"
+native_audio_output = true
+automatic_vad = true
+input_transcription = true
+output_transcription = true
+session_resumption = true
+context_compression = true
+allow_barge_in = true
+voice_name = "Aoede"
+sample_rate_in = 16000
+sample_rate_out = 24000
+preserve_existing_mcp = true
+preserve_existing_gemini_gateway = true
+preserve_existing_key_manager = true
+preserve_existing_conversation_memory = true
+# Low-Latency & Acoustic Optimization (v2.0)
+chunk_duration_ms = 32
+echo_cancellation = true
+self_listening_suppression = true
+speech_energy_threshold = 500.0
+silence_frames_threshold = 36
+barge_in_energy_threshold = 5500.0
+direct_greeting_fast_path = true
+first_response_watchdog_seconds = 5.0
+tool_timeout_seconds = 15.0
+reconnect_delay_seconds = 1.0
+max_reconnect_attempts = 5
+echo_tail_guard_ms = 350.0
+half_duplex_safety = true
+max_tools_per_turn = 4
+
+# =============================================================================
+# PERSONAL ASSISTANT & DAILY MANAGEMENT INTELLIGENCE ENGINE (DAY 14)
+# =============================================================================
+
+[personal_assistant]
+enabled = true
+offline_first = true
+timezone = "Asia/Kolkata"
+
+[personal_assistant.database]
+enabled = true
+database_path = "data/zye_assistant_db.sqlite"
+backup_enabled = true
+
+[personal_assistant.calendar]
+enabled = true
+default_event_duration_minutes = 60
+conflict_detection = true
+require_confirmation_for_delete = true
+
+[personal_assistant.reminders]
+enabled = true
+check_interval_seconds = 45
+reminder_15m = true
+reminder_2m = true
+deduplicate_alerts = true
+
+[personal_assistant.email]
+enabled = true
+imap_enabled = true
+smtp_enabled = true
+default_fetch_limit = 8
+require_confirmation_before_send = true
+attachments_enabled = true
+
+[personal_assistant.documents]
+enabled = true
+index_pdf = true
+index_docx = true
+index_xlsx = true
+index_csv = true
+index_txt = true
+index_md = true
+auto_organize_dry_run = true
+
+[personal_assistant.tasks]
+enabled = true
+auto_timeblock = true
+default_buffer_minutes = 10
+
+[personal_assistant.travel]
+enabled = true
+
+[personal_assistant.research]
+enabled = true
+google_search_enabled = true
+
+[personal_assistant.reports]
+enabled = true
+morning_brief_enabled = true
+end_of_day_enabled = true
+
+[personal_assistant.analytics]
+enabled = true
+anomaly_detection = true
+
+[personal_assistant.projects]
+enabled = true
+milestone_tracking = true
+blocker_tracking = true
+delay_risk_analysis = true
+
+# =============================================================================
+# Day 15 — Master MCP Orchestrator & Autonomous Decision Architecture
+# =============================================================================
+
+[orchestrator]
+enabled = true
+transport = "stdio"
+startup_timeout_seconds = 30
+tool_timeout_seconds = 30
+max_tool_loop_iterations = 12
+graceful_shutdown_timeout_seconds = 15
+
+[orchestrator.recovery]
+enabled = true
+max_restart_attempts = 1
+retry_non_idempotent = false
+
+[orchestrator.hot_reload]
+enabled = true
+atomic_swap = true
+rollback_on_failure = true
+validate_syntax = true
+run_targeted_tests = true
+
+[negative_brain]
+enabled = true
+mandatory_preflight = true
+structured_output = true
+require_audit_for_file_system_actions = true
+require_confirmation_for_irreversible_actions = true
+block_protected_actions_if_unavailable = true
+
+[negative_brain.decision_matrix]
+default_priority = "balanced"
+
+[mission_controller]
+enabled = true
+default_mission = "NORMAL_ASSISTANT"
+persist_state = true
+
+[watchdog]
+enabled = true
+interval_seconds = 25
+ram_warning_percent = 95
+disk_warning_percent = 92
+battery_warning_percent = 15
+battery_critical_percent = 8
+max_error_log_lines = 15
+
+[watchdog.emergency_reflexes]
+enabled = true
+battery_critical = true
+ram_overload_relief = true
+cyber_lockdown = false
+cyber_lockdown_requires_authorization = true
+
+
+
+
+
+
+
+# ==============================================================================
+# DAY 16 — WINDOWS APPLICATION & MASTER OS CONTROL
+# ==============================================================================
+
+[windows_control]
+enabled = true
+uia_backend = "uia"
+max_inspected_controls = 60
+application_start_timeout_seconds = 20
+ui_action_timeout_seconds = 10
+enable_screenshot_fallback = false
+
+[windows_control.safety]
+require_window_verification = true
+require_contact_verification = true
+require_message_verification = true
+require_explicit_power_confirmation = true
+
+[windows_control.input]
+clipboard_paste_enabled = true
+default_press_enter = false
+input_lock_enabled = true
+
+[system_os]
+enabled = true
+brightness_min = 0
+brightness_max = 100
+volume_min = 0
+volume_max = 100
+max_scroll_steps = 20
+
+[system_os.files]
+search_desktop = true
+search_documents = true
+search_downloads = true
+search_videos = true
+max_results = 5
+default_open_file = false
+
+[system_os.media]
+enabled = true
+
+[system_os.screenshot]
+enabled = true
+explicit_request_only = true
+
+[system_os.recycle_bin]
+enabled = true
+require_preview = true
+require_explicit_confirmation = true
+
+
+# ==============================================================================
+# DAY 17 — RELIABILITY ENGINEERING & SELF-HEALING ARCHITECTURE
+# ==============================================================================
+
+[reliability]
+enabled = true
+error_envelope_version = "1.0"
+enable_tanglish_translation = true
+secret_redaction_enabled = true
+default_timeout_seconds = 15.0
+
+[reliability.retry]
+max_retries = 3
+base_delay_seconds = 0.5
+max_delay_seconds = 30.0
+jitter_enabled = true
+
+[reliability.circuit_breaker]
+enabled = true
+failure_threshold = 5
+recovery_timeout_seconds = 60.0
+
+[reliability.telemetry]
+enabled = true
+log_path = "logs/zye_telemetry.log"
+max_log_size_mb = 5
+backup_count = 3
+audit_window_minutes = 60
+
+[reliability.process_management]
+protected_processes_filter_enabled = true
+pid_reuse_detection_enabled = true
+require_termination_confirmation = true
+
+[self_repair]
+enabled = true
+backups_directory = "backups"
+max_backup_file_size_bytes = 1048576
+require_ast_validation = true
+require_compile_validation = true
+auto_rollback_on_failure = true
+history_log_path = "logs/rollback_history.log"
+
+# ==============================================================================
+# DAY 18 — ADVANCED WINDOWS WORKSPACE CONTROL & SYSTEM UTILITIES
+# ==============================================================================
+
+[windows_workspace]
+enabled = true
+window_discovery_limit = 100
+enable_virtual_desktop = true
+enable_multimonitor = true
+
+[windows_workspace.input]
+unicode_paste_enabled = true
+default_press_enter = false
+max_text_length = 20000
+input_lock_enabled = true
+
+[windows_workspace.clipboard]
+enabled = true
+read_only_on_request = true
+preserve_previous_clipboard = true
+max_read_characters = 20000
+
+[windows_workspace.file_search]
+enabled = true
+search_desktop = true
+search_documents = true
+search_downloads = true
+search_videos = true
+max_results = 10
+max_search_depth = 5
+index_enabled = true
+
+[windows_workspace.media]
+enabled = true
+session_verification = true
+
+[windows_workspace.screenshot]
+enabled = true
+explicit_request_only = true
+format = "png"
+
+[windows_workspace.recycle_bin]
+enabled = true
+require_preview = true
+require_confirmation = true
+
+[windows_workspace.performance]
+lazy_initialization = true
+continuous_polling = false
+bounded_search = true
+
+# =============================================================================
+# DAY 19 — ADVANCED PROCESS MANAGER, APP CONTROL & OS INTEGRATION
+# =============================================================================
+
+[windows_process_manager]
+enabled = true
+max_process_results = 50
+process_inspection_timeout = 5
+graceful_termination_timeout = 5
+force_termination_requires_confirmation = true
+protect_system_processes = true
+
+[windows_process_manager.monitoring]
+continuous_polling = false
+on_demand_statistics = true
+
+[windows_application_control]
+enabled = true
+application_discovery = true
+application_launch_verification = true
+ui_automation_enabled = true
+max_ui_elements = 60
+ui_operation_timeout = 10
+
+[windows_application_control.whatsapp]
+enabled = true
+require_contact_verification = true
+require_message_confirmation = true
+require_call_confirmation = true
+
+[windows_application_control.security]
+reject_ambiguous_targets = true
+allow_arbitrary_shell_commands = false
+require_ui_element_verification = true
+
+[windows_integration]
+reuse_existing_mcp_servers = true
+verify_tool_registration = true
+verify_application_state = true
+
+[windows_integration.performance]
+lazy_initialization = true
+bounded_execution = true
+
+# =============================================================================
+# Day 20: Microsoft Office Live COM Automation Master Configuration
+# =============================================================================
+[office_master]
+enabled = true
+default_connection_policy = "ATTACH_EXISTING"
+sta_worker_timeout_seconds = 30
+auto_detect_apps = true
+max_preview_characters = 1500
+require_overwrite_confirmation = true
+allow_arbitrary_code_execution = false
+
+[office_master.applications]
+word_enabled = true
+excel_enabled = true
+powerpoint_enabled = true
+outlook_enabled = true
+
+[office_master.pdf_export]
+default_export_dir = "data/exports"
+verify_non_zero_size = true
+overwrite_requires_confirmation = true
+
+[office_master.ribbon_accelerator]
+enabled = true
+verify_foreground_active = true
+keytip_delay_seconds = 0.1
+disallow_dangerous_combinations = true
+
+[office_master.security]
+allowlisted_operations_only = true
+disallow_vba_macros = true
+block_arbitrary_eval = true
+
+
+
+
+
+[ai_plugins]
+enabled = true
+default_timeout_seconds = 60.0
+ssrf_protection = true
+
+[ai_plugins.chatgpt]
+enabled = true
+base_url = "https://api.openai.com/v1"
+default_model = "gpt-4o"
+timeout_seconds = 60.0
+
+[ai_plugins.claude]
+enabled = true
+base_url = "https://api.anthropic.com/v1"
+default_model = "claude-3-5-sonnet-20241022"
+timeout_seconds = 60.0
+
+[ai_plugins.ollama]
+enabled = true
+base_url = "http://127.0.0.1:11434"
+default_model = "llama3.2"
+timeout_seconds = 90.0
+
+[ai_plugins.perplexity]
+enabled = true
+base_url = "https://api.perplexity.ai"
+default_model = "sonar-pro"
+timeout_seconds = 60.0
+
+[ai_plugins.deepseek]
+enabled = true
+base_url = "https://api.deepseek.com"
+default_model = "deepseek-chat"
+timeout_seconds = 60.0
+
+[ai_plugins.groq]
+enabled = true
+base_url = "https://api.groq.com/openai/v1"
+default_model = "llama-3.3-70b-versatile"
+timeout_seconds = 45.0
+
+[ai_plugins.openrouter]
+enabled = true
+base_url = "https://openrouter.ai/api/v1"
+default_model = "anthropic/claude-3.5-sonnet"
+timeout_seconds = 60.0
+
+[ai_plugins.custom]
+enabled = false
+base_url = "https://api.example.com/v1"
+default_model = "custom-model"
+timeout_seconds = 60.0
+
+[ai_plugins.council]
+enabled = true
+default_members = ["chatgpt", "claude"]
+min_quorum = 2
+
+# =============================================================================
+# KINEMATIC RISK INTELLIGENCE & MONTE CARLO SIMULATION ENGINE (DAY 37)
+# =============================================================================
+
+[tactical_risk]
+enabled = true
+default_dimension = 2
+default_sample_count = 20000
+max_sample_count = 100000
+default_random_seed = 42
+max_simulation_horizon_seconds = 60
+max_concurrent_simulations = 2
+enable_telemetry_adapter = true
+enable_markov_adapter = true
+
+# =============================================================================
+# REAL-TIME NEWS INTELLIGENCE & INDEPENDENT VERIFICATION ENGINE (DAY 38)
+# =============================================================================
+
+[news_verification]
+enabled = true
+minimum_independent_sources = 2
+require_publication_timestamp = true
+require_claim_level_corroboration = true
+max_search_results = 8
+suppress_unverified_alerts = true
+enable_syndication_detection = true
+enable_duplicate_detection = true
+enable_article_content_validation = true
+enable_cache = true
+default_live_freshness_hours = 72.0
+request_timeout_seconds = 10.0
+
+# =============================================================================
+# LAN NETWORK DISCOVERY & INTERFACE INTELLIGENCE ENGINE (DAY 39)
+# =============================================================================
+
+[network_discovery]
+enabled = true
+default_scan_mode = "passive"
+enable_active_arp_scan = true
+require_active_scan_confirmation = true
+default_timeout_seconds = 3
+max_scan_hosts = 1024
+max_concurrent_scans = 1
+max_packet_rate_per_second = 20
+enable_hostname_resolution = false
+enable_vendor_lookup = false
+enable_device_history = true
+enable_network_statistics = true
+
+# =============================================================================
+# WINDOWS SECURITY EVENT ID 4625 FAILED LOGIN INTELLIGENCE (DAY 40)
+# =============================================================================
+
+[authentication_security]
+enabled = true
+event_id = 4625
+default_time_window_minutes = 60
+max_events_per_query = 1000
+enable_brute_force_detection = true
+enable_password_spray_detection = true
+enable_distributed_pattern_detection = true
+enable_rdp_analysis = true
+enable_event_monitoring = false
+require_event_monitor_authorization = true
+mask_usernames = true
+enable_local_network_enrichment = true
+alert_cooldown_minutes = 10
+
+[authentication_thresholds]
+failed_attempts_threshold = 3
+brute_force_window_minutes = 5
+password_spray_window_minutes = 10
+minimum_distinct_accounts = 5
+maximum_event_history_hours = 24
+
+# =============================================================================
+# ZYE AI — SMART MUSIC INTELLIGENCE SUBSYSTEM
+# =============================================================================
+
+[music]
+enabled = true
+default_provider = "local"
+allow_spotify_voice_experimental = false
+default_volume = 80
+auto_rescan_library_on_startup = true
+
+[local_music]
+music_directories = ["d:/Zye/data/music"]
+supported_formats = [".mp3", ".wav", ".ogg", ".flac", ".m4a"]
+enable_metadata_cache = true
+
+[spotify]
+mcp_server_script = "d:/Zye/external_mcp/spotify-mcp-server/build/index.js"
+config_path = "C:/ZyeSecrets/spotify-config.json"
+node_executable = "node"
+device_activation_timeout_seconds = 5
+max_reconnect_attempts = 3
+
+[audio_ducking]
+enabled = true
+ducked_volume_percentage = 20
+ramp_duration_ms = 150
+restore_delay_ms = 200
+
+[music_performance]
+search_limit = 10
+bounded_poll_interval_ms = 100
+bounded_poll_timeout_ms = 2000
+
+[music_privacy]
+log_track_names = true
+redact_spotify_tokens = true
+
+# =============================================================================
+# ZYE AI — OPENJARVIS-POWERED HYBRID ARCHITECTURE UPGRADE
+# =============================================================================
+
+[openjarvis_upgrade]
+enabled = true
+reference_archive_version = "1.0.1"
+attribution_document = "docs/THIRD_PARTY_NOTICES.md"
+audit_report = "reports/OPENJARVIS_SOURCE_AUDIT.md"
+
+[model_routing]
+prefer_offline = false
+enable_circuit_breaker = true
+failure_threshold = 3
+cooldown_seconds = 30.0
+primary_model = "gemini-2.5-pro"
+fallback_model = "gemini-2.5-flash"
+
+[agent_reliability]
+enable_tool_loop_guard = true
+max_identical_calls = 3
+ping_pong_window = 6
+max_turn_budget = 4
+poll_tool_budget = 8
+warn_before_block = true
+
+[resource_governor]
+enabled = true
+memory_pressure_percent = 80.0
+high_memory_pressure_percent = 88.0
+recovery_clear_percent = 78.0
+cpu_saturation_percent = 90.0
+
+[desktop_hud]
+enabled = true
+ws_port = 8765
+ws_host = "127.0.0.1"
+overlay_path = "desktop/overlay.html"
+
+
+
+
+

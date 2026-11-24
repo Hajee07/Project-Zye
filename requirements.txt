@@ -1,0 +1,56 @@
+# =============================================================================
+# ZYE AI — Dependency Manifest
+# =============================================================================
+# This is the planned dependency list for the full Zye AI project.
+# Do NOT install everything at once during Day 01.
+# Install incrementally as each subsystem is developed.
+# =============================================================================
+
+# --- Core AI & MCP ---
+google-genai
+mcp
+python-dotenv
+httpx
+pydantic
+
+# --- Voice & Audio ---
+silero-vad
+torch
+onnxruntime
+sounddevice
+numpy
+scipy
+edge-tts
+pygame
+keyboard
+
+# --- Windows & Office ---
+pywinauto
+pywin32
+pyautogui
+pygetwindow
+pyperclip
+python-docx
+python-pptx
+openpyxl
+pypdf
+
+# --- Browser & Vision ---
+playwright
+opencv-contrib-python
+mss
+pillow
+
+# --- Data & Intelligence ---
+duckdb
+pandas
+sympy
+duckduckgo-search
+
+# --- System & Cybersecurity ---
+psutil
+scapy
+
+# --- Engineering & CAD ---
+trimesh
+ezdxf

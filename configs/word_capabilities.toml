@@ -1,0 +1,193 @@
+# =============================================================================
+# Zye Day 21 — Advanced Microsoft Word Automation Configuration
+# =============================================================================
+
+[word]
+enabled = true
+advanced_automation_enabled = true
+attach_existing_by_default = true
+require_document_identity_check = true
+max_document_preview_chars = 5000
+max_bulk_replacements = 100
+max_table_rows = 500
+max_table_columns = 50
+
+[formatting]
+allow_custom_styles = true
+allow_document_wide_formatting = true
+require_confirmation_for_document_wide_changes = true
+
+[tables]
+allow_table_creation = true
+allow_bulk_table_population = true
+max_cells_per_operation = 10000
+
+[review]
+track_changes_enabled = true
+require_confirmation_for_bulk_accept = true
+require_confirmation_for_bulk_reject = true
+
+[mail_merge]
+enabled = true
+allow_csv_source = true
+allow_xlsx_source = true
+require_preview_before_execution = true
+require_confirmation_for_bulk_generation = true
+automatic_email_sending = false
+
+[pdf]
+enabled = true
+verify_output = true
+allow_silent_overwrite = false
+
+[security]
+allow_arbitrary_python = false
+allow_arbitrary_com_scripts = false
+allow_unrestricted_vba = false
+require_operation_registry = true
+require_path_validation = true
+
+# =============================================================================
+# Professional Document Templates (Section 21)
+# =============================================================================
+
+[templates.business_report]
+name = "Professional Business Report"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Calibri"
+title_size = 26
+heading1_font = "Calibri"
+heading1_size = 18
+heading1_color = 16711680 # Deep Blue
+body_font = "Calibri"
+body_size = 11
+line_spacing = 1.15
+include_toc = true
+include_page_numbers = true
+
+[templates.academic_paper]
+name = "Academic Research Paper"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Times New Roman"
+title_size = 24
+heading1_font = "Times New Roman"
+heading1_size = 16
+body_font = "Times New Roman"
+body_size = 12
+line_spacing = 2.0
+include_toc = false
+include_page_numbers = true
+
+[templates.project_proposal]
+name = "Project Proposal"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Segoe UI"
+title_size = 24
+heading1_font = "Segoe UI Semibold"
+heading1_size = 16
+body_font = "Segoe UI"
+body_size = 10.5
+line_spacing = 1.15
+include_toc = true
+include_page_numbers = true
+
+[templates.executive_summary]
+name = "Executive Summary"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Arial"
+title_size = 22
+heading1_font = "Arial"
+heading1_size = 15
+body_font = "Arial"
+body_size = 11
+line_spacing = 1.25
+include_toc = false
+include_page_numbers = true
+
+[templates.business_letter]
+name = "Business Letter"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Calibri"
+title_size = 14
+heading1_font = "Calibri"
+heading1_size = 12
+body_font = "Calibri"
+body_size = 11
+line_spacing = 1.0
+include_toc = false
+include_page_numbers = false
+
+[templates.technical_documentation]
+name = "Technical Documentation"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Consolas"
+title_size = 22
+heading1_font = "Segoe UI Semibold"
+heading1_size = 16
+body_font = "Segoe UI"
+body_size = 10.5
+line_spacing = 1.15
+include_toc = true
+include_page_numbers = true
+
+[templates.meeting_minutes]
+name = "Meeting Minutes"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Calibri"
+title_size = 20
+heading1_font = "Calibri"
+heading1_size = 14
+body_font = "Calibri"
+body_size = 11
+line_spacing = 1.15
+include_toc = false
+include_page_numbers = true
+
+[templates.appointment_letter]
+name = "Employee Appointment Letter"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Times New Roman"
+title_size = 18
+heading1_font = "Times New Roman"
+heading1_size = 14
+body_font = "Times New Roman"
+body_size = 11.5
+line_spacing = 1.15
+include_toc = false
+include_page_numbers = true
+
+[templates.project_status]
+name = "Project Status Report"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Calibri"
+title_size = 22
+heading1_font = "Calibri"
+heading1_size = 16
+body_font = "Calibri"
+body_size = 11
+line_spacing = 1.15
+include_toc = false
+include_page_numbers = true
+
+[templates.user_manual]
+name = "Standard User Manual"
+paper_size = "A4"
+orientation = "PORTRAIT"
+title_font = "Segoe UI"
+title_size = 26
+heading1_font = "Segoe UI Semibold"
+heading1_size = 18
+body_font = "Segoe UI"
+body_size = 11
+line_spacing = 1.2
+include_toc = true
+include_page_numbers = true

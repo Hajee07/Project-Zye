@@ -1,0 +1,200 @@
+{
+  "council_id": "council_1795208554_0ecc67",
+  "mode": "QUICK",
+  "status": "completed",
+  "question": "What architecture should we use?",
+  "total_queried": 2,
+  "successful_count": 2,
+  "execution_time_ms": 1.97,
+  "participants": [
+    {
+      "provider_id": "chatgpt",
+      "model": "gpt-4o",
+      "status": "success",
+      "content": "I recommend Solution A: FastAPI microservices with Redis cache.",
+      "latency_ms": 110.0,
+      "usage": {
+        "input_tokens": 20,
+        "output_tokens": 15,
+        "total_tokens": 35,
+        "latency_ms": 110.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    },
+    {
+      "provider_id": "claude",
+      "model": "claude-3-5-sonnet",
+      "status": "success",
+      "content": "I recommend Solution B: Modular monolith with PostgreSQL.",
+      "latency_ms": 140.0,
+      "usage": {
+        "input_tokens": 25,
+        "output_tokens": 18,
+        "total_tokens": 43,
+        "latency_ms": 140.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    }
+  ],
+  "comparison": {
+    "agreements": [],
+    "disagreements": [],
+    "minority_arguments": [
+      {
+        "topic": "performance",
+        "summary": "I recommend Solution A: FastAPI microservices with Redis cache.",
+        "provider_id": "chatgpt",
+        "claim_type": "recommendation"
+      },
+      {
+        "topic": "general",
+        "summary": "I recommend Solution B: Modular monolith with PostgreSQL.",
+        "provider_id": "claude",
+        "claim_type": "recommendation"
+      }
+    ]
+  },
+  "consensus": {
+    "consensus_status": "NO_AGREEMENT",
+    "agreement_score": 0.0,
+    "shared_points_count": 0,
+    "shared_points": [],
+    "minority_positions_count": 2,
+    "minority_positions": [
+      {
+        "topic": "performance",
+        "summary": "I recommend Solution A: FastAPI microservices with Redis cache.",
+        "provider_id": "chatgpt",
+        "claim_type": "recommendation"
+      },
+      {
+        "topic": "general",
+        "summary": "I recommend Solution B: Modular monolith with PostgreSQL.",
+        "provider_id": "claude",
+        "claim_type": "recommendation"
+      }
+    ],
+    "critical_disagreements_count": 0,
+    "unresolved_issues": [],
+    "signal_caveat": "Consensus reflects shared model heuristics and training overlap; not independent mathematical verification."
+  },
+  "evaluation": {
+    "decision_id": "dec_df7bb809",
+    "priority_mode": "BALANCED",
+    "criteria_weights": {
+      "reliability": 0.2,
+      "correctness": 0.2,
+      "safety": 0.2,
+      "performance": 0.15,
+      "maintainability": 0.1,
+      "simplicity": 0.1,
+      "compatibility": 0.05
+    },
+    "total_candidates": 2,
+    "ranked_solutions": [
+      {
+        "rank": 1,
+        "solution_id": "chatgpt",
+        "title": "Chatgpt Architecture Proposal",
+        "provider_id": "chatgpt",
+        "composite_score": 0.735,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.85,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [
+          "I recommend Solution A: FastAPI microservices with Redis cache."
+        ],
+        "cons": [],
+        "unresolved_risks": []
+      },
+      {
+        "rank": 2,
+        "solution_id": "claude",
+        "title": "Claude Architecture Proposal",
+        "provider_id": "claude",
+        "composite_score": 0.713,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.7,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [
+          "I recommend Solution B: Modular monolith with PostgreSQL."
+        ],
+        "cons": [],
+        "unresolved_risks": []
+      }
+    ],
+    "recommended_solution": "chatgpt",
+    "top_score": 0.735,
+    "score_separation": 0.022,
+    "is_provisional": true
+  },
+  "evidence": {
+    "chatgpt": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    },
+    "claude": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    }
+  },
+  "cross_critiques": {},
+  "final_decision": {
+    "verdict_category": "HYBRID_SOLUTION",
+    "selected_solution": "Chatgpt Architecture Path",
+    "reasoning": [
+      "Multi-criteria decision analysis scored top candidate at 0.735.",
+      "Consensus status resolved as NO_AGREEMENT.",
+      "Disagreements identified: 0 (0 critical)."
+    ],
+    "unresolved_risks": [],
+    "supreme_arbiter": "Gemini Master Brain (Authoritative Verdict Ready)"
+  },
+  "synthesis_prompt_ready": "=== AI COUNCIL SUPREME ARBITER DOSSIER ===\nOriginal Question: What architecture should we use?\nCouncil Quorum: 2 models queried.\n\n--- INDEPENDENT MODEL PROPOSALS ---\n\n[CHATGPT (Model: gpt-4o, Latency: 110.0ms)]:\nI recommend Solution A: FastAPI microservices with Redis cache.\n\n\n[CLAUDE (Model: claude-3-5-sonnet, Latency: 140.0ms)]:\nI recommend Solution B: Modular monolith with PostgreSQL.\n\n\n--- DISAGREEMENT MATRIX ---\nNo critical contradictions detected.\n\n--- MULTI-CRITERIA DECISION SCORING ---\n- Rank 1: Chatgpt Architecture Proposal (Composite Score: 0.735)\n- Rank 2: Claude Architecture Proposal (Composite Score: 0.713)\n\n--- SUPREME ARBITER INSTRUCTIONS FOR GEMINI MASTER BRAIN ---\nYou are the Supreme Arbiter and sole voice of Zye AI. Review the independent proposals, cross-critiques, and decision ranking above. Reconcile technical disagreements, reject false premises, and synthesize the definitive, authoritative recommendation for the user. Speak the final verdict directly via Edge-TTS (en-IN-NeerjaNeural)."
+}

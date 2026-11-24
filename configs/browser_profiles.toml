@@ -1,0 +1,30 @@
+# Zye AI — Browser Profiles Configuration (Day 24)
+
+[browser]
+enabled = true
+browser_channel = "chrome"
+headless = false
+default_homepage = "https://www.google.com"
+
+[browser.profiles]
+persistent_profiles_enabled = true
+profile_selection_required = true
+allow_profile_switching = true
+max_registered_profiles = 20
+base_storage_dir = "browser_profiles"
+
+[browser.content]
+max_extracted_characters = 12000
+extract_visible_text_only = true
+include_page_title = true
+include_page_url = true
+
+[browser.sessions]
+reuse_active_session = true
+prevent_duplicate_profile_launch = true
+preserve_session_data = true
+
+[browser.timeouts]
+navigation_timeout_ms = 30000
+action_timeout_ms = 15000
+search_timeout_ms = 20000

@@ -1,0 +1,74 @@
+# Zye Day 20 — Microsoft Office Automation Capabilities Matrix
+# Defines supported COM capabilities, version requirements, and risk tiers
+
+[capabilities.com_bridge]
+name = "com_bridge"
+description = "Live COM runtime connection via STA worker thread"
+min_version = "11.0"
+requires_active_document = false
+supported_apps = ["word", "excel", "powerpoint", "outlook"]
+risk_level = "READ_ONLY"
+
+[capabilities.document_inspection]
+name = "document_inspection"
+description = "Inspect active document structure, word count, sheets, slides, or folders"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["word", "excel", "powerpoint", "outlook"]
+risk_level = "READ_ONLY"
+
+[capabilities.content_modification]
+name = "content_modification"
+description = "Insert text, headings, or content into active documents"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["word", "excel", "powerpoint"]
+risk_level = "LOW_RISK"
+
+[capabilities.formatting]
+name = "formatting"
+description = "Apply styles, fonts, cell formatting or alignment"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["word", "excel", "powerpoint"]
+risk_level = "LOW_RISK"
+
+[capabilities.formula_manipulation]
+name = "formula_manipulation"
+description = "Read and write cell formulas and calculate workbooks"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["excel"]
+risk_level = "LOW_RISK"
+
+[capabilities.slide_operations]
+name = "slide_operations"
+description = "Insert slides, modify slide titles, inspect shapes"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["powerpoint"]
+risk_level = "LOW_RISK"
+
+[capabilities.email_drafting]
+name = "email_drafting"
+description = "Create draft emails in Outlook without sending"
+min_version = "12.0"
+requires_active_document = false
+supported_apps = ["outlook"]
+risk_level = "MEDIUM_RISK"
+
+[capabilities.pdf_export]
+name = "pdf_export"
+description = "Export active document, workbook or presentation directly to PDF via COM"
+min_version = "12.0"
+requires_active_document = true
+supported_apps = ["word", "excel", "powerpoint"]
+risk_level = "LOW_RISK"
+
+[capabilities.ribbon_accelerator]
+name = "ribbon_accelerator"
+description = "Trigger menu and ribbon shortcut key sequences with foreground verification"
+min_version = "12.0"
+requires_active_document = false
+supported_apps = ["word", "excel", "powerpoint", "outlook"]
+risk_level = "LOW_RISK"

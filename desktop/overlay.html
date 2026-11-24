@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZYE AI — Desktop HUD Overlay</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  background: transparent !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+}
+#hud-window {
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  height: 480px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  border-radius: 20px;
+  background: rgba(18, 22, 34, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  padding: 16px;
+  gap: 12px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  border: 1px solid rgba(147, 197, 253, 0.3);
+}
+.state-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+}
+.state-idle { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.state-listening { background: rgba(59, 130, 246, 0.25); color: #60a5fa; }
+.state-thinking { background: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+.state-speaking { background: rgba(168, 85, 247, 0.25); color: #c084fc; }
+
+/* Visualizer Waveform Canvas */
+#waveform-canvas {
+  width: 100%;
+  height: 60px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Resource Meters */
+.metrics-row {
+  display: flex;
+  gap: 8px;
+}
+.metric-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.metric-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+}
+.metric-val {
+  font-size: 13px;
+  font-weight: 600;
+}
+.metric-bar-bg {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.metric-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+/* Event Feed */
+#event-log {
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11.5px;
+}
+#event-log::-webkit-scrollbar { width: 4px; }
+#event-log::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
+.log-item {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.log-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #93c5fd;
+  text-transform: uppercase;
+}
+.log-text {
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-all;
+}
+</style>
+</head>
+<body>
+<div id="hud-window">
+  <div class="header">
+    <div class="brand">
+      <span class="brand-title">ZYE AI</span>
+      <span class="badge">Gemini Master Brain</span>
+    </div>
+    <div id="state-badge" class="state-pill state-idle">
+      <div id="state-dot" class="state-dot"></div>
+      <span id="state-text">IDLE</span>
+    </div>
+  </div>
+
+  <canvas id="waveform-canvas"></canvas>
+
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">Memory</div>
+      <div id="ram-val" class="metric-val">--%</div>
+      <div class="metric-bar-bg"><div id="ram-bar" class="metric-bar-fill"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">CPU</div>
+      <div id="cpu-val" class="metric-val">--%</div>
+      <div class="metric-bar-bg"><div id="cpu-bar" class="metric-bar-fill"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Governor</div>
+      <div id="gov-val" class="metric-val">NORMAL</div>
+    </div>
+  </div>
+
+  <div id="event-log">
+    <div class="log-item">
+      <span class="log-tag">SYSTEM</span>
+      <span class="log-text">ZYE Desktop HUD initializing...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('waveform-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+
+let phase = 0;
+let amplitude = 0.2;
+
+function drawWaveform() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const midY = canvas.height / 2;
+  ctx.beginPath();
+  ctx.strokeStyle = '#60a5fa';
+  ctx.lineWidth = 2 * window.devicePixelRatio;
+  for (let x = 0; x < canvas.width; x++) {
+    const y = midY + Math.sin(x * 0.05 + phase) * amplitude * (canvas.height / 3);
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  phase += 0.08;
+  requestAnimationFrame(drawWaveform);
+}
+drawWaveform();
+
+// WebSocket Connection
+const logBox = document.getElementById('event-log');
+const stateBadge = document.getElementById('state-badge');
+const stateText = document.getElementById('state-text');
+const ramVal = document.getElementById('ram-val');
+const ramBar = document.getElementById('ram-bar');
+const cpuVal = document.getElementById('cpu-val');
+const cpuBar = document.getElementById('cpu-bar');
+const govVal = document.getElementById('gov-val');
+
+function appendLog(tag, msg) {
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `<span class="log-tag">${tag}</span><span class="log-text">${msg}</span>`;
+  logBox.appendChild(item);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function updateState(state) {
+  stateText.innerText = state;
+  stateBadge.className = 'state-pill state-' + state.toLowerCase();
+  if (state === 'LISTENING') amplitude = 0.8;
+  else if (state === 'SPEAKING') amplitude = 0.6;
+  else if (state === 'THINKING') amplitude = 0.4;
+  else amplitude = 0.15;
+}
+
+function connectWS() {
+  const ws = new WebSocket('ws://127.0.0.1:8765');
+  ws.onopen = () => appendLog('BRIDGE', 'Connected to ZYE Core');
+  ws.onclose = () => {
+    appendLog('BRIDGE', 'Disconnected. Retrying in 2s...');
+    setTimeout(connectWS, 2000);
+  };
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'init' || msg.type === 'status') {
+        if (msg.state) updateState(msg.state);
+        if (msg.metrics) {
+          ramVal.innerText = Math.round(msg.metrics.ram_percent) + '%';
+          ramBar.style.width = msg.metrics.ram_percent + '%';
+          cpuVal.innerText = Math.round(msg.metrics.cpu_percent) + '%';
+          cpuBar.style.width = msg.metrics.cpu_percent + '%';
+          govVal.innerText = msg.metrics.resource_state;
+        }
+      } else if (msg.type === 'event') {
+        appendLog(msg.event_type, JSON.stringify(msg.data).slice(0, 80));
+      }
+    } catch(err) {}
+  };
+}
+connectWS();
+</script>
+</body>
+</html>

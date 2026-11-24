@@ -1,0 +1,52 @@
+# =============================================================================
+# Zye Day 23 — Advanced Microsoft PowerPoint Automation Configuration
+# =============================================================================
+
+[powerpoint]
+enabled = true
+live_com_enabled = true
+attach_existing_by_default = true
+require_presentation_identity = true
+
+[powerpoint.slides]
+max_bulk_slide_operations = 100
+require_delete_confirmation = true
+
+[powerpoint.animations]
+enabled = true
+max_effects_per_operation = 100
+verify_effects = true
+
+[powerpoint.transitions]
+enabled = true
+verify_all_slides = true
+
+[powerpoint.themes]
+allow_theme_changes = true
+require_backup_for_master_changes = true
+
+[powerpoint.export]
+pdf_enabled = true
+verify_output = true
+
+# =============================================================================
+# Professional Slide Formatting Presets
+# =============================================================================
+
+[presets.corporate_modern]
+name = "Corporate Modern"
+title_font = "Calibri"
+body_font = "Calibri Light"
+title_size = 36
+body_size = 18
+title_color = "#1F4E79"
+bg_color = "#FFFFFF"
+
+[presets.simple_dark]
+name = "Simple Dark"
+title_font = "Segoe UI"
+body_font = "Segoe UI"
+title_size = 36
+body_size = 18
+title_color = "#00D2FF"
+bg_color = "#1E1E2E"

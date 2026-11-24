@@ -1,0 +1,20 @@
+# =============================================================================
+# Zye Day 23 — Universal Desktop UI Automation Configuration
+# =============================================================================
+
+[desktop_ui]
+enabled = true
+uia_enabled = true
+keyboard_fallback_enabled = true
+require_foreground_window = true
+require_process_validation = true
+
+[desktop_ui.keyboard]
+max_sequence_length = 20
+require_sequence_validation = true
+require_action_verification = true
+
+[desktop_ui.security]
+block_unbounded_sequences = true
+block_password_field_interaction = true
+require_confirmation_for_destructive_actions = true

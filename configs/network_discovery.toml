@@ -1,0 +1,17 @@
+# =============================================================================
+# ZYE AI — LAN Network Discovery & Network Intelligence Configuration (Day 39)
+# =============================================================================
+
+[network_discovery]
+enabled = true
+default_scan_mode = "passive"
+enable_active_arp_scan = true
+require_active_scan_confirmation = true
+default_timeout_seconds = 3
+max_scan_hosts = 1024
+max_concurrent_scans = 1
+max_packet_rate_per_second = 20
+enable_hostname_resolution = false
+enable_vendor_lookup = false
+enable_device_history = true
+enable_network_statistics = true

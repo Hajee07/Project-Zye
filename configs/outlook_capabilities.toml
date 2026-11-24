@@ -1,0 +1,23 @@
+# =============================================================================
+# Zye Day 23 — Advanced Microsoft Outlook Intelligence Configuration
+# =============================================================================
+
+[outlook]
+enabled = true
+live_com_enabled = true
+attach_existing_by_default = true
+require_profile_validation = true
+
+[outlook.mail]
+max_preview_messages = 50
+default_create_drafts = true
+require_send_confirmation = true
+allow_automatic_send = false
+
+[outlook.attachments]
+require_path_validation = true
+require_file_verification = true
+allow_automatic_execution = false
+
+[outlook.folders]
+require_delete_confirmation = true

@@ -1,0 +1,41 @@
+# Zye AI — Supported Web Applications Configuration (Day 24)
+
+[apps.gmail]
+enabled = true
+display_name = "Gmail"
+base_url = "https://mail.google.com"
+read_only_default = true
+search_enabled = true
+adapter = "gmail_adapter"
+
+[apps.google_drive]
+enabled = true
+display_name = "Google Drive"
+base_url = "https://drive.google.com"
+read_only_default = true
+search_enabled = true
+adapter = "google_drive_adapter"
+
+[apps.youtube]
+enabled = true
+display_name = "YouTube"
+base_url = "https://www.youtube.com"
+read_only_default = true
+search_enabled = true
+adapter = "universal_web_adapter"
+
+[apps.google_calendar]
+enabled = true
+display_name = "Google Calendar"
+base_url = "https://calendar.google.com"
+read_only_default = true
+search_enabled = true
+adapter = "universal_web_adapter"
+
+[apps.google_search]
+enabled = true
+display_name = "Google Search"
+base_url = "https://www.google.com"
+read_only_default = true
+search_enabled = true
+adapter = "universal_web_adapter"

@@ -1,0 +1,25 @@
+# =============================================================================
+# ZYE AI — Windows Authentication Security Intelligence Configuration (Day 40)
+# =============================================================================
+
+[authentication_security]
+enabled = true
+event_id = 4625
+default_time_window_minutes = 60
+max_events_per_query = 1000
+enable_brute_force_detection = true
+enable_password_spray_detection = true
+enable_distributed_pattern_detection = true
+enable_rdp_analysis = true
+enable_event_monitoring = false
+require_event_monitor_authorization = true
+mask_usernames = true
+enable_local_network_enrichment = true
+alert_cooldown_minutes = 10
+
+[authentication_thresholds]
+failed_attempts_threshold = 3
+brute_force_window_minutes = 5
+password_spray_window_minutes = 10
+minimum_distinct_accounts = 5
+maximum_event_history_hours = 24

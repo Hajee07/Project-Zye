@@ -1,0 +1,199 @@
+{
+  "council_id": "council_1795208554_af044c",
+  "mode": "DEEP_COUNCIL",
+  "status": "completed",
+  "question": "Architecture design",
+  "total_queried": 2,
+  "successful_count": 2,
+  "execution_time_ms": 0.96,
+  "participants": [
+    {
+      "provider_id": "chatgpt",
+      "model": "gpt-4o",
+      "status": "success",
+      "content": "Proposal A: Microservices.",
+      "latency_ms": 0.0,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null,
+        "latency_ms": 0.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    },
+    {
+      "provider_id": "claude",
+      "model": "claude-3-5-sonnet",
+      "status": "success",
+      "content": "Proposal B: Monolith.",
+      "latency_ms": 0.0,
+      "usage": {
+        "input_tokens": null,
+        "output_tokens": null,
+        "total_tokens": null,
+        "latency_ms": 0.0,
+        "provider_cost_usd": null
+      },
+      "error": null
+    }
+  ],
+  "comparison": {
+    "agreements": [],
+    "disagreements": [],
+    "minority_arguments": [
+      {
+        "topic": "general",
+        "summary": "Proposal A: Microservices.",
+        "provider_id": "chatgpt",
+        "claim_type": "technical"
+      },
+      {
+        "topic": "general",
+        "summary": "Proposal B: Monolith.",
+        "provider_id": "claude",
+        "claim_type": "technical"
+      }
+    ]
+  },
+  "consensus": {
+    "consensus_status": "NO_AGREEMENT",
+    "agreement_score": 0.0,
+    "shared_points_count": 0,
+    "shared_points": [],
+    "minority_positions_count": 2,
+    "minority_positions": [
+      {
+        "topic": "general",
+        "summary": "Proposal A: Microservices.",
+        "provider_id": "chatgpt",
+        "claim_type": "technical"
+      },
+      {
+        "topic": "general",
+        "summary": "Proposal B: Monolith.",
+        "provider_id": "claude",
+        "claim_type": "technical"
+      }
+    ],
+    "critical_disagreements_count": 0,
+    "unresolved_issues": [],
+    "signal_caveat": "Consensus reflects shared model heuristics and training overlap; not independent mathematical verification."
+  },
+  "evaluation": {
+    "decision_id": "dec_187e0aa5",
+    "priority_mode": "BALANCED",
+    "criteria_weights": {
+      "reliability": 0.2,
+      "correctness": 0.2,
+      "safety": 0.2,
+      "performance": 0.15,
+      "maintainability": 0.1,
+      "simplicity": 0.1,
+      "compatibility": 0.05
+    },
+    "total_candidates": 2,
+    "ranked_solutions": [
+      {
+        "rank": 1,
+        "solution_id": "chatgpt",
+        "title": "Chatgpt Architecture Proposal",
+        "provider_id": "chatgpt",
+        "composite_score": 0.713,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.7,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [],
+        "cons": [],
+        "unresolved_risks": []
+      },
+      {
+        "rank": 2,
+        "solution_id": "claude",
+        "title": "Claude Architecture Proposal",
+        "provider_id": "claude",
+        "composite_score": 0.713,
+        "criteria_scores": {
+          "correctness": 0.5,
+          "reliability": 0.6,
+          "safety": 1.0,
+          "performance": 0.7,
+          "maintainability": 0.65,
+          "simplicity": 0.8,
+          "compatibility": 0.85,
+          "resource_efficiency": 0.75,
+          "fault_tolerance": 0.6
+        },
+        "pros": [],
+        "cons": [],
+        "unresolved_risks": []
+      }
+    ],
+    "recommended_solution": "chatgpt",
+    "top_score": 0.713,
+    "score_separation": 0.0,
+    "is_provisional": true
+  },
+  "evidence": {
+    "chatgpt": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    },
+    "claude": {
+      "uncertainty": {
+        "evidence_tier": "LOW EVIDENCE SUPPORT",
+        "uncertainty_score": 0.75,
+        "hedge_phrases_count": 0,
+        "hedge_phrases_sample": [],
+        "unsupported_assumptions_count": 0,
+        "unsupported_assumptions": [],
+        "substantiated_claims_count": 0,
+        "is_unverified": true
+      },
+      "coverage": {
+        "total_claims": 1,
+        "anchored_claims": 0,
+        "coverage_ratio": 0.0,
+        "assessment": "WEAK"
+      }
+    }
+  },
+  "cross_critiques": {
+    "chatgpt": "Claude's monolith lacks horizontal scale.",
+    "claude": "ChatGPT's microservices add network latency."
+  },
+  "final_decision": {
+    "verdict_category": "HYBRID_SOLUTION",
+    "selected_solution": "Chatgpt Architecture Path",
+    "reasoning": [
+      "Multi-criteria decision analysis scored top candidate at 0.713.",
+      "Consensus status resolved as NO_AGREEMENT.",
+      "Disagreements identified: 0 (0 critical)."
+    ],
+    "unresolved_risks": [],
+    "supreme_arbiter": "Gemini Master Brain (Authoritative Verdict Ready)"
+  },
+  "synthesis_prompt_ready": "=== AI COUNCIL SUPREME ARBITER DOSSIER ===\nOriginal Question: Architecture design\nCouncil Quorum: 2 models queried.\n\n--- INDEPENDENT MODEL PROPOSALS ---\n\n[CHATGPT (Model: gpt-4o, Latency: 0.0ms)]:\nProposal A: Microservices.\n\n\n[CLAUDE (Model: claude-3-5-sonnet, Latency: 0.0ms)]:\nProposal B: Monolith.\n\n\n--- CROSS-EXAMINATION & CRITIQUES ---\n\n[CHATGPT PEER CRITIQUE]:\nClaude's monolith lacks horizontal scale.\n\n\n[CLAUDE PEER CRITIQUE]:\nChatGPT's microservices add network latency.\n\n\n--- DISAGREEMENT MATRIX ---\nNo critical contradictions detected.\n\n--- MULTI-CRITERIA DECISION SCORING ---\n- Rank 1: Chatgpt Architecture Proposal (Composite Score: 0.713)\n- Rank 2: Claude Architecture Proposal (Composite Score: 0.713)\n\n--- SUPREME ARBITER INSTRUCTIONS FOR GEMINI MASTER BRAIN ---\nYou are the Supreme Arbiter and sole voice of Zye AI. Review the independent proposals, cross-critiques, and decision ranking above. Reconcile technical disagreements, reject false premises, and synthesize the definitive, authoritative recommendation for the user. Speak the final verdict directly via Edge-TTS (en-IN-NeerjaNeural)."
+}

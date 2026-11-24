@@ -1,0 +1,93 @@
+# =============================================================================
+# Zye Day 22 — Advanced Microsoft Excel Automation Configuration
+# =============================================================================
+
+[excel]
+enabled = true
+advanced_automation_enabled = true
+attach_existing_by_default = true
+require_workbook_identity_check = true
+require_worksheet_validation = true
+
+[excel.inspection]
+max_preview_rows = 100
+max_preview_columns = 30
+max_preview_cells = 3000
+
+[excel.formulas]
+enabled = true
+max_formula_length = 8192
+allow_dynamic_arrays_when_supported = true
+allow_external_formula_links = false
+
+[excel.charts]
+enabled = true
+max_charts_per_operation = 10
+allow_3d_charts = true
+
+[excel.pivot]
+enabled = true
+max_pivot_fields = 30
+require_source_validation = true
+require_destination_validation = true
+
+[excel.conditional_formatting]
+enabled = true
+max_rules_per_operation = 100
+
+[excel.tables]
+enabled = true
+max_table_rows = 100000
+
+[excel.data_cleaning]
+require_preview = true
+require_confirmation_for_deletion = true
+
+[excel.security]
+allow_arbitrary_python = false
+allow_arbitrary_com_scripts = false
+allow_unrestricted_vba = false
+allow_automatic_macro_execution = false
+allow_automatic_external_link_updates = false
+require_operation_registry = true
+require_document_identity_validation = true
+require_overwrite_confirmation = true
+
+[excel.pdf]
+enabled = true
+verify_output = true
+allow_silent_overwrite = false
+
+# =============================================================================
+# Professional Formatting Presets (Section 09)
+# =============================================================================
+
+[presets.business_report]
+name = "Business Report"
+header_bg = "#1F4E79"
+header_font_color = "#FFFFFF"
+header_bold = true
+alternate_row_bg = "#F2F2F2"
+border_style = "thin"
+font_name = "Calibri"
+font_size = 11
+
+[presets.financial_report]
+name = "Financial Report"
+header_bg = "#2C3E50"
+header_font_color = "#FFFFFF"
+header_bold = true
+totals_row_bg = "#EAECEE"
+currency_format = "$#,##0.00"
+number_format = "#,##0.00"
+font_name = "Calibri"
+font_size = 10
+
+[presets.kpi_dashboard]
+name = "KPI Dashboard"
+header_bg = "#0E6655"
+header_font_color = "#FFFFFF"
+header_bold = true
+alternate_row_bg = "#E8F8F5"
+font_name = "Segoe UI"
+font_size = 11
