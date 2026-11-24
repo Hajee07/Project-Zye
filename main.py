@@ -1140,6 +1140,14 @@ class ZyeVoiceLoop:
         self.music_router = None
         self.audio_ducker = None
 
+        # OpenJarvis Architecture Subsystems (ZYE-BUG-020)
+        self.event_bus = None
+        self.fact_store = None
+        self.task_scheduler = None
+        self.resource_governor = None
+        self.security_policy = None
+        self.desktop_hud_bridge = None
+
         # Backwards compatibility handles
         self.text_handler = None
         self._gemini_key = os.environ.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY_01", "")).strip()
@@ -1148,7 +1156,39 @@ class ZyeVoiceLoop:
         self._initialize_subsystems()
 
     def _initialize_subsystems(self) -> None:
-        """Instantiate modular Day 10 components."""
+        """Instantiate modular Day 10 components and OpenJarvis services."""
+        # 0. OpenJarvis Architecture Subsystems (ZYE-BUG-020)
+        try:
+            from zye_core.event_bus import get_event_bus
+            from zye_memory.memory_store import FactStore
+            from zye_scheduler.task_scheduler import TaskScheduler
+            from zye_reliability.resource_governor import ResourceGovernor
+            from zye_security.capabilities import CapabilityPolicy
+            from zye_desktop.ws_bridge import DesktopWebSocketBridge, WebSocketBridgeConfig
+
+            self.event_bus = get_event_bus()
+            self.fact_store = FactStore("data/memory.db")
+            self.task_scheduler = TaskScheduler(db_path="data/tasks.db", event_bus=self.event_bus)
+            self.resource_governor = ResourceGovernor(event_bus=self.event_bus)
+            self.security_policy = CapabilityPolicy(default_deny=False, event_bus=self.event_bus)
+
+            # Optional desktop HUD bridge
+            hud_cfg = self._cfg.get("desktop", {}).get("hud", {})
+            if hud_cfg.get("enabled", True):
+                bridge_config = WebSocketBridgeConfig(
+                    host=hud_cfg.get("host", "127.0.0.1"),
+                    port=int(hud_cfg.get("port", 8765)),
+                    auth_token=hud_cfg.get("auth_token", None),
+                )
+                self.desktop_hud_bridge = DesktopWebSocketBridge(
+                    config=bridge_config,
+                    event_bus=self.event_bus,
+                    governor=self.resource_governor,
+                )
+            self._log.info("ZYE OpenJarvis core subsystems initialized successfully.")
+        except Exception as o_exc:
+            self._log.warning("OpenJarvis core subsystems initialization warning: %s", o_exc)
+
         # 1. Output subsystems: Pygame Playback, Edge-TTS, Coordinator
         try:
             from zye_voice.playback import ZyeAudioPlayback, PlaybackConfig
@@ -1426,6 +1466,18 @@ class ZyeVoiceLoop:
                             "reason": f"Execution gate unavailable. Unverified tool mutation blocked for '{tool_name}'.",
                         }
 
+                # Derive InputOrigin from trusted caller context
+                is_voice_call = False
+                if isinstance(args, dict) and args.get("_origin") == "voice":
+                    is_voice_call = True
+                    args.pop("_origin", None)
+                elif hasattr(self, "live_manager") and self.live_manager:
+                    if getattr(self.live_manager, "_turn_active", False) or getattr(self.live_manager, "_turn_tool_requested", False):
+                        is_voice_call = True
+
+                from zye_music.music_models import InputOrigin, IntentResult, IntentType, ProviderType
+                origin = InputOrigin.VOICE if is_voice_call else InputOrigin.MANUAL_TOOL
+
                 # Smart Music Tool Dispatch
                 if tool_name in (
                     "play_music", "pause_music", "resume_music", "stop_music",
@@ -1435,8 +1487,6 @@ class ZyeVoiceLoop:
                     "get_available_playback_devices"
                 ):
                     if hasattr(self, "music_router") and self.music_router:
-                        from zye_music.music_models import InputOrigin, IntentResult, IntentType, ProviderType
-                        origin = InputOrigin.MANUAL_TOOL
                         if tool_name == "play_music":
                             query = args.get("track_or_query") or args.get("query") or args.get("song") or args.get("track")
                             provider_pref = ProviderType(args["provider"]) if "provider" in args else None
@@ -1481,13 +1531,26 @@ class ZyeVoiceLoop:
                             devices = provider.get_available_devices()
                             return {"status": "SUCCESS", "devices": devices}
 
-                # Direct Spotify MCP tool dispatch
+                # Direct Spotify MCP tool dispatch (guarded by origin policy)
                 if (tool_name.startswith("spotify_") or tool_name in (
                     "playMusic", "pausePlayback", "resumePlayback", "skipToNext", "skipToPrevious",
                     "setVolume", "adjustVolume", "seekPlayback", "setShuffle", "setRepeat",
                     "searchSpotify", "getNowPlaying", "getAvailableDevices", "getMyPlaylists",
                     "getPlaylistTracks", "getQueue", "addToQueue", "transferPlayback"
                 )) and hasattr(self, "spotify_adapter") and self.spotify_adapter:
+                    # Enforce policy: if call is from voice, do NOT bypass music_router policy checks
+                    if origin == InputOrigin.VOICE and hasattr(self, "music_router") and self.music_router:
+                        from zye_music.music_errors import MusicErrorCode
+                        from zye_music.music_models import IntentResult, IntentType
+                        try:
+                            # Verify if Spotify voice route is authorized
+                            prov = self.music_router.resolve_provider(requested_provider=ProviderType.SPOTIFY, origin=origin)
+                        except Exception as auth_err:
+                            return {
+                                "status": "BLOCKED_BY_POLICY",
+                                "code": "SPOTIFY_VOICE_NOT_AUTHORIZED",
+                                "message": str(auth_err),
+                            }
                     from zye_music.spotify_mcp_adapter import SPOTIFY_TOOL_NAME_MAP
                     mcp_tool_name = SPOTIFY_TOOL_NAME_MAP.get(tool_name, tool_name[8:] if tool_name.startswith("spotify_") else tool_name)
                     return self.spotify_adapter.call_tool(mcp_tool_name, args)
@@ -2053,6 +2116,26 @@ class ZyeVoiceLoop:
         if hasattr(self, "live_manager") and self.live_manager:
             try:
                 self.live_manager.stop()
+            except Exception:
+                pass
+        if hasattr(self, "desktop_hud_bridge") and self.desktop_hud_bridge:
+            try:
+                await self.desktop_hud_bridge.stop()
+            except Exception:
+                pass
+        if hasattr(self, "task_scheduler") and self.task_scheduler:
+            try:
+                self.task_scheduler.stop()
+            except Exception:
+                pass
+        if hasattr(self, "fact_store") and self.fact_store:
+            try:
+                self.fact_store.close()
+            except Exception:
+                pass
+        if hasattr(self, "event_bus") and self.event_bus:
+            try:
+                self.event_bus.close()
             except Exception:
                 pass
         self.state = VoiceSystemState.OFFLINE

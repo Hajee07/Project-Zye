@@ -114,9 +114,9 @@ class GeminiErrorHandler:
     def calculate_backoff(self, retry_count: int, retry_after: float = 0.0) -> float:
         """Calculate exponential backoff with random jitter."""
         if retry_after > 0:
-            # Jitter the Retry-After slightly (0 to 10%)
+            # ZYE-BUG-018: Strictly respect provider Retry-After; never truncate below provider's mandated wait
             jitter = random.uniform(0.0, max(0.5, retry_after * 0.1))
-            return min(self._max_backoff, retry_after + jitter)
+            return retry_after + jitter
 
         backoff = self._base_backoff * (2 ** retry_count)
         jitter = random.uniform(0.1, max(0.5, backoff * 0.2))

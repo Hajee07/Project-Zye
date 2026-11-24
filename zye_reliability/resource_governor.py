@@ -54,6 +54,8 @@ class SystemMetrics:
     disk_percent: float
     state: ResourceState
     timestamp: float
+    is_measured: bool = True
+    source_missing: bool = False
 
 
 class ResourceGovernor:
@@ -77,6 +79,8 @@ class ResourceGovernor:
         """Poll host metrics and determine current ResourceState with hysteresis."""
         with self._lock:
             now = time.time()
+            source_missing = False
+            is_measured = True
             if _HAS_PSUTIL:
                 try:
                     mem = psutil.virtual_memory()
@@ -89,20 +93,28 @@ class ResourceGovernor:
                     ram_total_mb = mem.total / (1024 * 1024)
                 except Exception as exc:
                     logger.warning("Failed to query psutil metrics: %s", exc)
-                    ram_percent = 50.0
-                    ram_available_mb = 4096.0
-                    ram_total_mb = 8192.0
-                    cpu = 10.0
-                    disk = 50.0
+                    # ZYE-BUG-016: Explicitly represent missing telemetry without invented numbers
+                    ram_percent = 0.0
+                    ram_available_mb = 0.0
+                    ram_total_mb = 0.0
+                    cpu = 0.0
+                    disk = 0.0
+                    source_missing = True
+                    is_measured = False
             else:
-                ram_percent = 50.0
-                ram_available_mb = 4096.0
-                ram_total_mb = 8192.0
-                cpu = 10.0
-                disk = 50.0
+                ram_percent = 0.0
+                ram_available_mb = 0.0
+                ram_total_mb = 0.0
+                cpu = 0.0
+                disk = 0.0
+                source_missing = True
+                is_measured = False
 
             prior_state = self._current_state
-            new_state = self._evaluate_state(ram_percent, cpu, prior_state)
+            if source_missing:
+                new_state = prior_state if prior_state != ResourceState.NORMAL else ResourceState.DEGRADED
+            else:
+                new_state = self._evaluate_state(ram_percent, cpu, prior_state)
 
             metrics = SystemMetrics(
                 ram_percent=ram_percent,
@@ -112,6 +124,8 @@ class ResourceGovernor:
                 disk_percent=disk,
                 state=new_state,
                 timestamp=now,
+                is_measured=is_measured,
+                source_missing=source_missing,
             )
             self._last_metrics = metrics
             self._current_state = new_state
@@ -140,8 +154,13 @@ class ResourceGovernor:
         if cpu_percent >= self.config.cpu_saturation_percent:
             return ResourceState.DEGRADED
 
-        # 4. Hysteresis Recovery: If previously under pressure, only clear below 78%
-        if current_state in (ResourceState.HIGH_MEMORY_PRESSURE, ResourceState.RESOURCE_PRESSURE):
+        # 4. Hysteresis Recovery: If previously under pressure or recovering, only clear below 78%
+        # ZYE-BUG-017: Include RECOVERING so subsequent samples don't clear prematurely at 79%
+        if current_state in (
+            ResourceState.HIGH_MEMORY_PRESSURE,
+            ResourceState.RESOURCE_PRESSURE,
+            ResourceState.RECOVERING,
+        ):
             if ram_percent < self.config.recovery_clear_percent:
                 return ResourceState.NORMAL
             else:
@@ -197,9 +216,13 @@ class ResourceGovernor:
     def is_local_inference_permitted(self) -> Tuple[bool, str]:
         """
         Gate check for local LLM execution.
-        Strictly forbids local model loading when RAM exceeds high_memory_pressure_percent (88%).
+        Strictly forbids local model loading when RAM exceeds high_memory_pressure_percent (88%)
+        or when telemetry is unavailable.
         """
         metrics = self.sample_metrics()
+        if metrics.source_missing or not metrics.is_measured:
+            return False, "Local model inference denied: Host resource telemetry is unavailable."
+
         if metrics.state == ResourceState.HIGH_MEMORY_PRESSURE:
             reason = (
                 f"Local model inference rejected: Host RAM is {metrics.ram_percent:0.1f}% "
@@ -220,6 +243,8 @@ class ResourceGovernor:
     def can_allocate_memory_mb(self, required_mb: float) -> bool:
         """Determine if required memory buffer can be safely allocated."""
         metrics = self.sample_metrics()
+        if metrics.source_missing or not metrics.is_measured:
+            return False
         return (metrics.ram_available_mb - required_mb) > 1024.0
 
 

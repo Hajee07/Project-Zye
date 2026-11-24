@@ -444,27 +444,44 @@ class AudioAdmissionGate:
         player: Any = None,
         coordinator: Any = None,
         allow_barge_in: bool = True,
-        barge_in_threshold: float = 9500.0,
+        barge_in_threshold: float = 2200.0,
     ) -> tuple[bool, bool]:
         """
         Evaluate incoming microphone PCM frame against active output and echo tail.
+        Supports full-duplex operation (half_duplex_safety=False) and responsive barge-in.
         Returns:
             (admit_frame: bool, trigger_barge_in: bool)
         """
         now_ns = time.perf_counter_ns()
         output_busy = self.is_output_active(player, coordinator)
 
+        # In full duplex mode (half_duplex_safety=False), admit speech frames continuously
+        if not self.half_duplex_safety:
+            self.state = AudioAdmissionState.ADMITTING
+            self.admitted_frames_count += 1
+            if output_busy and allow_barge_in:
+                samples = np.frombuffer(pcm_bytes, dtype=np.int16)
+                rms = float(np.sqrt(np.mean(samples.astype(np.float32)**2))) if len(samples) > 0 else 0.0
+                if rms >= barge_in_threshold:
+                    self._barge_in_streak += 1
+                    if self._barge_in_streak >= 2:  # ~64ms responsive barge-in
+                        self._barge_in_streak = 0
+                        return True, True
+                else:
+                    self._barge_in_streak = 0
+            return True, False
+
         if output_busy:
             self.last_output_stop_ns = now_ns
             self.state = AudioAdmissionState.OUTPUT_ACTIVE
 
             if allow_barge_in:
-                # Inspect for genuine high-energy user barge-in over playback
+                # Inspect for genuine user barge-in over playback with calibrated sensitivity
                 samples = np.frombuffer(pcm_bytes, dtype=np.int16)
                 rms = float(np.sqrt(np.mean(samples.astype(np.float32)**2))) if len(samples) > 0 else 0.0
                 if rms >= barge_in_threshold:
                     self._barge_in_streak += 1
-                    if self._barge_in_streak >= 5:  # ~160ms of sustained intentional high-energy speech
+                    if self._barge_in_streak >= 2:  # ~64ms sustained user voice triggers barge-in
                         self._barge_in_streak = 0
                         self.state = AudioAdmissionState.ADMITTING
                         self.admitted_frames_count += 1
@@ -845,6 +862,25 @@ class ZyeGeminiLiveManager:
             else:
                 resumption_cfg = types.SessionResumptionConfig()
 
+        # Realtime VAD configuration (ZYE-BUG-011)
+        realtime_input_cfg = None
+        if hasattr(types, "RealtimeInputConfig") and hasattr(types, "AutomaticActivityDetection"):
+            is_auto_vad = getattr(self.config, "automatic_vad", True)
+            if is_auto_vad:
+                aad = types.AutomaticActivityDetection(
+                    disabled=False,
+                    prefix_padding_ms=300,
+                    silence_duration_ms=450,
+                )
+            else:
+                aad = types.AutomaticActivityDetection(disabled=True)
+            realtime_input_cfg = types.RealtimeInputConfig(automatic_activity_detection=aad)
+
+        # Context window compression (ZYE-BUG-011)
+        compression_cfg = None
+        if getattr(self.config, "context_window_compression", False) and hasattr(types, "ContextWindowCompressionConfig"):
+            compression_cfg = types.ContextWindowCompressionConfig()
+
         connect_config = types.LiveConnectConfig(
             response_modalities=[types.Modality.AUDIO],
             http_options=types.HttpOptions(api_version=self.config.api_version),
@@ -854,6 +890,8 @@ class ZyeGeminiLiveManager:
             input_audio_transcription=input_trans,
             output_audio_transcription=output_trans,
             session_resumption=resumption_cfg,
+            realtime_input_config=realtime_input_cfg,
+            context_window_compression=compression_cfg,
         )
         return connect_config
 
@@ -1060,11 +1098,13 @@ class ZyeGeminiLiveManager:
                                 self.chime_player.play_stop()
                             except Exception:
                                 pass
-                        try:
-                            async with self._get_send_lock():
-                                await session.send(end_of_turn=True)
-                        except Exception as e_eot:
-                            logger.debug("end_of_turn dispatch notice: %s", e_eot)
+                        # Only dispatch manual end_of_turn in manual VAD mode (ZYE-BUG-010)
+                        if not getattr(self.config, "automatic_vad", True):
+                            try:
+                                async with self._get_send_lock():
+                                    await session.send(end_of_turn=True)
+                            except Exception as e_eot:
+                                logger.debug("Manual VAD end_of_turn dispatch notice: %s", e_eot)
                     else:
                         logger.debug("Discarding brief acoustic transient (%d voiced frames < 3); remaining in listening mode", current_voiced)
 
@@ -1205,8 +1245,11 @@ class ZyeGeminiLiveManager:
                                             t_part = time.perf_counter_ns()
                                             if self._current_turn is not None and not self._current_turn.t8_first_audio_bytes_ns:
                                                 self._current_turn.t8_first_audio_bytes_ns = t_part
-                                                self._current_turn.t9_playback_queued_ns = t_part
-                                                self._current_turn.t10_output_submitted_ns = t_part
+                                                self._current_turn.t9_playback_queued_ns = time.perf_counter_ns()
+                                                # T10 represents actual hardware DAC submission (ZYE-BUG-012)
+                                                # Do not conflate network arrival with DAC presentation
+                                                player_write = getattr(self.player, "last_write_timestamp_ns", 0)
+                                                self._current_turn.t10_output_submitted_ns = player_write if player_write > 0 else None
                                             self._current_turn_audio_chunks += 1
                                             self.telemetry.total_audio_chunks_received += 1
                                             self.telemetry.output_audio_seconds += len(audio_bytes) / (self.config.output_sample_rate * 2)
@@ -1278,10 +1321,10 @@ class ZyeGeminiLiveManager:
 
                             # Check if tool execution is in flight or pending for this turn
                             is_tool_in_flight = (
-                                self._turn_tool_requested
+                                (self._turn_tool_requested and not self._turn_tool_executed)
                                 or self._turn_tools_in_flight > 0
                                 or any(not t.done() for t in self._active_tool_tasks)
-                                or self.state in (LiveSessionState.TOOL_CALL_PENDING, LiveSessionState.TOOL_RUNNING, LiveSessionState.PROCESSING)
+                                or (self.state in (LiveSessionState.TOOL_CALL_PENDING, LiveSessionState.TOOL_RUNNING))
                                 or (self._current_turn and bool(self._current_turn.tool_name and not self._turn_tool_executed))
                             )
 
@@ -1459,7 +1502,9 @@ class ZyeGeminiLiveManager:
                     self._current_turn.tool_name = tool_name
                     self._current_turn.m1_tool_validated_ns = time.perf_counter_ns()
 
-                logger.info("Gemini Live requested MCP tool '%s' (id=%s, args=%s)", tool_name, call_id, tool_args)
+                # Redact raw argument values in logs for privacy (ZYE-BUG-022)
+                arg_summary = list(tool_args.keys()) if isinstance(tool_args, dict) else type(tool_args).__name__
+                logger.info("Gemini Live requested MCP tool '%s' (id=%s, arg_keys=%s)", tool_name, call_id, arg_summary)
 
                 # Prune cache entries older than 60 seconds
                 now = time.time()
@@ -1468,11 +1513,14 @@ class ZyeGeminiLiveManager:
                     if now - v.get("_timestamp", 0) < 60.0
                 }
 
-                # Prevent duplicate non-idempotent operations
-                op_key = f"{tool_name}_{sorted(tool_args.items())}"
+                # Logical operation identity deduplication (ZYE-BUG-006):
+                # Bind deduplication key to the specific provider call_id.
+                # If the same call_id is redelivered over the wire, reuse the settled result.
+                # If a new call_id arrives (even with identical args), execute it as a fresh distinct command.
+                op_key = f"call_{call_id}_{tool_name}" if call_id else f"{tool_name}_{sorted(tool_args.items())}"
                 cached_res = self._operation_cache.get(op_key)
-                if cached_res and (now - cached_res.get("_timestamp", 0) < 5.0):
-                    logger.info("Reusing deduplicated tool result for %s", tool_name)
+                if cached_res and (now - cached_res.get("_timestamp", 0) < 60.0):
+                    logger.info("Reusing deduplicated network delivery tool result for call_id=%s, tool=%s", call_id, tool_name)
                     tool_result = cached_res.get("result", {})
                 else:
                     self.set_state(LiveSessionState.TOOL_RUNNING)
@@ -1482,6 +1530,9 @@ class ZyeGeminiLiveManager:
 
                     if self.tool_dispatcher is not None:
                         try:
+                            # Propagate voice origin metadata
+                            if isinstance(tool_args, dict):
+                                tool_args.setdefault("_origin", "voice")
                             tool_result = await self.tool_dispatcher(tool_name, tool_args)
                             is_success = (
                                 isinstance(tool_result, dict)
@@ -1491,10 +1542,11 @@ class ZyeGeminiLiveManager:
                             )
                             if is_success:
                                 self.telemetry.successful_tool_calls += 1
-                                self._operation_cache[op_key] = {"result": tool_result, "_timestamp": now}
+                            self._operation_cache[op_key] = {"result": tool_result, "_timestamp": now, "call_id": call_id}
                         except Exception as t_err:
                             logger.error("Tool execution error for %s: %s", tool_name, t_err)
                             tool_result = {"status": "ERROR", "error": str(t_err)}
+                            self._operation_cache[op_key] = {"result": tool_result, "_timestamp": now, "call_id": call_id}
                     else:
                         tool_result = {"status": "NO_DISPATCHER", "message": f"Executed {tool_name}"}
 
@@ -1523,6 +1575,7 @@ class ZyeGeminiLiveManager:
         finally:
             self._turn_tools_in_flight = max(0, self._turn_tools_in_flight - 1)
             self._turn_tool_executed = True
+            self._turn_tool_requested = False
 
     # -------------------------------------------------------------------------
     # Main Continuous Conversation Runner (Section 10, 15, 36)

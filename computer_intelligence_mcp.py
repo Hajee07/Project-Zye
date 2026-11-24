@@ -1665,3 +1665,24 @@ def export_entity_graph(format: str = "json") -> dict[str, Any]:
     except Exception as exc:
         return {"status": "ERROR", "error_code": "EXPORT_GRAPH_FAILED", "message": str(exc)}
 
+
+# ============================================================================
+# Main Entry Point (FastMCP / MCPServer stdio runner)
+# ============================================================================
+
+def main() -> int:
+    """Run FastMCP / MCPServer stdio transport if invoked directly."""
+    try:
+        mcp.run(transport="stdio")
+        return 0
+    except Exception as exc:
+        import sys
+        sys.stderr.write(f"ZyeComputerIntelligence server error: {exc}\n")
+        return 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+
+

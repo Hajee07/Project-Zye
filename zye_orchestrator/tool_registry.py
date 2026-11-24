@@ -26,6 +26,13 @@ class ToolEntry:
     input_schema: dict[str, Any] = field(default_factory=dict)
     generation: int = 0      # Registry generation when registered
     schema_valid: bool = True
+    schema: Any = None
+
+    def __post_init__(self) -> None:
+        if self.schema is not None and not self.input_schema:
+            self.input_schema = self.schema
+        elif self.input_schema and self.schema is None:
+            self.schema = self.input_schema
 
 
 class ZyeToolRegistry:
@@ -70,16 +77,25 @@ class ZyeToolRegistry:
     async def discover_tools(self, server_name: str, session: Any) -> list[dict[str, Any]]:
         """
         Discover tools from an MCP server session using list_tools().
-        Returns list of raw tool dicts: [{name, description, inputSchema}]
+        Returns list of raw tool dicts: [{name, description, inputSchema, input_schema}]
+        Supports both MCP v2 (input_schema) and legacy wire format (inputSchema).
         """
         try:
             result = await session.list_tools()
             tools = []
             for tool in result.tools:
+                schema = (
+                    getattr(tool, "input_schema", None)
+                    or getattr(tool, "inputSchema", None)
+                    or (tool.get("input_schema") if isinstance(tool, dict) else None)
+                    or (tool.get("inputSchema") if isinstance(tool, dict) else None)
+                    or {}
+                )
                 tool_dict = {
-                    "name": getattr(tool, "name", ""),
-                    "description": getattr(tool, "description", ""),
-                    "inputSchema": getattr(tool, "inputSchema", {}) or {},
+                    "name": getattr(tool, "name", "") if not isinstance(tool, dict) else tool.get("name", ""),
+                    "description": getattr(tool, "description", "") if not isinstance(tool, dict) else tool.get("description", ""),
+                    "inputSchema": schema,
+                    "input_schema": schema,
                 }
                 tools.append(tool_dict)
             return tools
@@ -95,7 +111,7 @@ class ZyeToolRegistry:
         desc = tool_dict.get("description", "")
         if not isinstance(desc, str):
             return False
-        schema = tool_dict.get("inputSchema")
+        schema = tool_dict.get("input_schema", tool_dict.get("inputSchema"))
         if schema is not None and not isinstance(schema, dict):
             return False
         return True
@@ -257,7 +273,7 @@ class ZyeToolRegistry:
             if _genai:
                 try:
                     # Build Schema from inputSchema dict
-                    schema = entry.input_schema or {}
+                    schema = entry.input_schema or getattr(entry, "schema", None) or {}
                     fd = types.FunctionDeclaration(
                         name=entry.public_name,
                         description=entry.description or f"MCP tool: {entry.original_name}",

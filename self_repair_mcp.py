@@ -100,13 +100,17 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# FastMCP Protocol Initialization (Graceful Fallback Shim)
+# FastMCP Protocol Initialization (Compatible with MCP v2 and v1)
 # ---------------------------------------------------------------------------
 try:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.mcpserver import MCPServer as FastMCP
     _MCP_AVAILABLE = True
-except ImportError:
-    _MCP_AVAILABLE = False
+except (ImportError, ModuleNotFoundError):
+    try:
+        from mcp.server.fastmcp import FastMCP  # type: ignore[no-redef]
+        _MCP_AVAILABLE = True
+    except (ImportError, ModuleNotFoundError):
+        _MCP_AVAILABLE = False
 
     class FastMCP:  # type: ignore[no-redef]
         """Fallback FastMCP implementation when mcp package is pending installation."""

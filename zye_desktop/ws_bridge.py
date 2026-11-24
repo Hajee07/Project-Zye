@@ -36,6 +36,7 @@ class WebSocketBridgeConfig:
     host: str = "127.0.0.1"
     port: int = 8765
     broadcast_interval: float = 1.0
+    auth_token: Optional[str] = None
 
 
 class DesktopWebSocketBridge:
@@ -62,11 +63,27 @@ class DesktopWebSocketBridge:
         if self.event_bus:
             self.event_bus.subscribe_all(self._on_bus_event)
 
+    def broadcast_audio_level(self, rms: float, provenance: str = "measured") -> None:
+        """Broadcast measured acoustic energy level to HUD overlay."""
+        norm_level = min(1.0, max(0.05, rms / 6000.0))
+        self.broadcast_sync({
+            "type": "audio_energy",
+            "level": norm_level,
+            "rms": rms,
+            "provenance": provenance,
+            "timestamp": time.time(),
+        })
+
     def _on_bus_event(self, event: ZyeEvent) -> None:
         """Handle event from Unified Event Bus and forward to HUD clients."""
         # Update assistant state according to event type
         if event.event_type == ZyeEventType.USER_SPEECH_STARTED:
             self._assistant_state = "LISTENING"
+            if isinstance(event.payload, dict) and "rms" in event.payload:
+                try:
+                    self.broadcast_audio_level(float(event.payload["rms"]), provenance="measured")
+                except Exception:
+                    pass
         elif event.event_type == ZyeEventType.MODEL_REQUEST_STARTED:
             self._assistant_state = "THINKING"
         elif event.event_type == ZyeEventType.AUDIO_PLAYBACK_STARTED:
@@ -148,7 +165,25 @@ class DesktopWebSocketBridge:
         return None
 
     async def _handler(self, websocket: Any) -> None:
-        """Handle individual WebSocket client connection."""
+        """Handle individual WebSocket client connection with optional token authentication."""
+        # ZYE-BUG-021: Protect loopback bridge with subscriber auth boundary when configured
+        if self.config.auth_token:
+            path = getattr(websocket, "path", "") or getattr(websocket, "request", {}).get("path", "")
+            authenticated = f"token={self.config.auth_token}" in str(path)
+            if not authenticated:
+                try:
+                    msg_text = await asyncio.wait_for(websocket.recv(), timeout=2.0)
+                    msg_obj = json.loads(msg_text)
+                    if msg_obj.get("token") == self.config.auth_token or msg_obj.get("auth") == self.config.auth_token:
+                        authenticated = True
+                except Exception:
+                    authenticated = False
+
+            if not authenticated:
+                logger.warning("Rejecting unauthenticated Desktop HUD connection.")
+                await websocket.close(code=1008, reason="Unauthorized")
+                return
+
         self._clients.add(websocket)
         logger.info("Desktop HUD client connected")
 

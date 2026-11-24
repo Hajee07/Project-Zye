@@ -14,7 +14,9 @@ Enforces:
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import logging
+import queue
 import re
 import threading
 import time
@@ -56,7 +58,7 @@ def redact_payload(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class ZyeEventBus:
-    """Thread-safe event bus with bounded history and observer isolation."""
+    """Thread-safe event bus with bounded history, async queuing, and observer isolation."""
 
     def __init__(self, history_limit: int = 1000) -> None:
         self._subscribers: Dict[ZyeEventType, List[SubscriberCallback]] = {}
@@ -65,20 +67,48 @@ class ZyeEventBus:
         self._history: deque[ZyeEvent] = deque(maxlen=max(1, history_limit))
         self._async_loop: Optional[asyncio.AbstractEventLoop] = None
 
+        # ZYE-BUG-013: Bounded async queue and worker thread for slow subscriber isolation
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="zye_evbus_worker"
+        )
+        self._async_queue: queue.Queue[tuple[SubscriberCallback, ZyeEvent, str]] = queue.Queue(maxsize=2000)
+        self._slow_subscribers: Set[SubscriberCallback] = set()
+        self._async_subscribers: Set[SubscriberCallback] = set()
+        self._running = True
+        self._queue_worker = threading.Thread(
+            target=self._process_async_queue,
+            name="ZyeEventBusAsyncWorker",
+            daemon=True,
+        )
+        self._queue_worker.start()
+
     def set_async_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         """Register the primary asyncio event loop for async task dispatch."""
         self._async_loop = loop
 
-    def subscribe(self, event_type: ZyeEventType, callback: SubscriberCallback) -> None:
+    def subscribe(
+        self,
+        event_type: ZyeEventType,
+        callback: SubscriberCallback,
+        async_dispatch: bool = False,
+    ) -> None:
         """Register a callback to be notified when event_type is emitted."""
         with self._lock:
             self._subscribers.setdefault(event_type, []).append(callback)
+            if async_dispatch:
+                self._async_subscribers.add(callback)
 
-    def subscribe_all(self, callback: SubscriberCallback) -> None:
+    def subscribe_all(
+        self,
+        callback: SubscriberCallback,
+        async_dispatch: bool = False,
+    ) -> None:
         """Register a wildcard callback to receive every published event."""
         with self._lock:
             if callback not in self._wildcard_subscribers:
                 self._wildcard_subscribers.append(callback)
+            if async_dispatch:
+                self._async_subscribers.add(callback)
 
     def unsubscribe(self, event_type: ZyeEventType, callback: SubscriberCallback) -> None:
         """Remove callback from event_type subscriber list."""
@@ -88,6 +118,8 @@ class ZyeEventBus:
                 listeners.remove(callback)
             except ValueError:
                 pass
+            self._slow_subscribers.discard(callback)
+            self._async_subscribers.discard(callback)
 
     def unsubscribe_all(self, callback: SubscriberCallback) -> None:
         """Remove callback from wildcard list."""
@@ -96,6 +128,67 @@ class ZyeEventBus:
                 self._wildcard_subscribers.remove(callback)
             except ValueError:
                 pass
+            self._slow_subscribers.discard(callback)
+            self._async_subscribers.discard(callback)
+
+    def _enqueue_callback(self, cb: SubscriberCallback, event: ZyeEvent, event_name: str) -> None:
+        """Enqueue callback for ordered execution on background queue worker."""
+        try:
+            self._async_queue.put_nowait((cb, event, event_name))
+        except queue.Full:
+            logger.warning("Event bus async queue full (2000 items); dropping oldest item.")
+            try:
+                self._async_queue.get_nowait()
+                self._async_queue.put_nowait((cb, event, event_name))
+            except Exception:
+                pass
+
+    def _process_async_queue(self) -> None:
+        """Sequential FIFO worker processing queued slow/async subscribers."""
+        while self._running:
+            try:
+                item = self._async_queue.get(timeout=0.5)
+                cb, event, event_name = item
+                self._safe_invoke(cb, event, event_name)
+                self._async_queue.task_done()
+            except queue.Empty:
+                continue
+            except Exception as exc:
+                logger.error("Error in async queue processor: %s", exc)
+
+    def _safe_invoke(self, cb: SubscriberCallback, event: ZyeEvent, event_name: str) -> None:
+        """Invoke callback with exception isolation."""
+        try:
+            cb(event)
+        except Exception as e:
+            logger.error("Error in subscriber %r on %s: %s", cb, event_name, e)
+
+    def _dispatch_to_subscriber(
+        self,
+        cb: SubscriberCallback,
+        event: ZyeEvent,
+        event_name: str,
+        max_wait_sec: float = 0.015,
+    ) -> None:
+        """Dispatch event to a subscriber with bounded publisher blocking."""
+        if cb in self._async_subscribers or cb in self._slow_subscribers:
+            self._enqueue_callback(cb, event, event_name)
+            return
+
+        future = self._executor.submit(self._safe_invoke, cb, event, event_name)
+        try:
+            future.result(timeout=max_wait_sec)
+        except concurrent.futures.TimeoutError:
+            with self._lock:
+                self._slow_subscribers.add(cb)
+            logger.warning(
+                "Subscriber %r exceeded %0.0fms execution budget on %s; offloaded to queue.",
+                cb,
+                max_wait_sec * 1000,
+                event_name,
+            )
+        except Exception as exc:
+            logger.error("Error in subscriber %r on %s: %s", cb, event_name, exc)
 
     def publish(
         self,
@@ -126,17 +219,11 @@ class ZyeEventBus:
 
         # Notify specific listeners
         for cb in listeners:
-            try:
-                cb(event)
-            except Exception as e:
-                logger.error("Error in event subscriber %r on %s: %s", cb, event_type.value, e)
+            self._dispatch_to_subscriber(cb, event, event_type.value)
 
         # Notify wildcard listeners
         for cb in wildcards:
-            try:
-                cb(event)
-            except Exception as e:
-                logger.error("Error in wildcard subscriber %r on %s: %s", cb, event_type.value, e)
+            self._dispatch_to_subscriber(cb, event, event_type.value)
 
         return event
 
@@ -151,16 +238,10 @@ class ZyeEventBus:
             wildcards = list(self._wildcard_subscribers)
 
         for cb in listeners:
-            try:
-                cb(event)
-            except Exception as e:
-                logger.error("Error in event subscriber %r on %s: %s", cb, event.event_type.value, e)
+            self._dispatch_to_subscriber(cb, event, event.event_type.value)
 
         for cb in wildcards:
-            try:
-                cb(event)
-            except Exception as e:
-                logger.error("Error in wildcard subscriber %r on %s: %s", cb, event.event_type.value, e)
+            self._dispatch_to_subscriber(cb, event, event.event_type.value)
 
         return event
 
@@ -189,6 +270,14 @@ class ZyeEventBus:
         with self._lock:
             self._history.clear()
 
+    def close(self) -> None:
+        """Shut down background queue worker and executor."""
+        self._running = False
+        try:
+            self._executor.shutdown(wait=False)
+        except Exception:
+            pass
+
 
 # Module-level singleton
 _instance: Optional[ZyeEventBus] = None
@@ -208,4 +297,9 @@ def reset_event_bus() -> None:
     """Reset the global singleton (used in test fixtures)."""
     global _instance
     with _instance_lock:
+        if _instance is not None:
+            try:
+                _instance.close()
+            except Exception:
+                pass
         _instance = None

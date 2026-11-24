@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import subprocess
 import threading
 from typing import Any, Dict, List, Optional, Set
@@ -176,13 +177,38 @@ class SpotifyMCPAdapter(MusicProvider):
         self._lock = threading.RLock()
         self._request_id: int = 1
         self._is_initialized: bool = False
+        self._stdout_queue: Optional[queue.Queue[str]] = None
+        self._reader_thread: Optional[threading.Thread] = None
 
     @property
     def provider_type(self) -> ProviderType:
         return ProviderType.SPOTIFY
 
+    def _start_reader(self) -> None:
+        """Start daemon background thread to read lines from subprocess stdout into queue."""
+        self._stdout_queue = queue.Queue()
+
+        def _read() -> None:
+            if not self._process or not self._process.stdout:
+                return
+            for line in iter(self._process.stdout.readline, ""):
+                if self._stdout_queue is not None:
+                    self._stdout_queue.put(line)
+
+        self._reader_thread = threading.Thread(target=_read, daemon=True, name="SpotifyMCPReader")
+        self._reader_thread.start()
+
+    def _readline_timeout(self, timeout: float = 8.0) -> Optional[str]:
+        """Read a line from the subprocess stdout queue with bounded timeout."""
+        if not self._stdout_queue:
+            return None
+        try:
+            return self._stdout_queue.get(timeout=timeout)
+        except queue.Empty:
+            return None
+
     def initialize(self) -> bool:
-        """Verify configuration and start MCP child process."""
+        """Verify configuration, start MCP child process, and perform JSON-RPC initialization handshake."""
         with self._lock:
             if self._is_initialized and self._process and self._process.poll() is None:
                 return True
@@ -211,8 +237,43 @@ class SpotifyMCPAdapter(MusicProvider):
                     bufsize=1,
                     env=env,
                 )
+                self._start_reader()
+
+                # Perform JSON-RPC 2.0 MCP initialize handshake with timeout
+                init_id = self._request_id
+                self._request_id += 1
+                init_req = {
+                    "jsonrpc": "2.0",
+                    "id": init_id,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "clientInfo": {"name": "ZyeSpotifyAdapter", "version": "1.0.0"},
+                    },
+                }
+                if self._process.stdin:
+                    self._process.stdin.write(json.dumps(init_req) + "\n")
+                    self._process.stdin.flush()
+
+                init_resp = self._readline_timeout(timeout=5.0)
+                if not init_resp:
+                    logger.warning("Spotify MCP initialize response timed out; proceeding in compatible mode.")
+                else:
+                    try:
+                        resp_data = json.loads(init_resp.strip())
+                        logger.debug("Spotify MCP initialize handshake acknowledged: %s", resp_data.get("id"))
+                    except Exception:
+                        pass
+
+                # Send notifications/initialized
+                if self._process.stdin:
+                    notif = {"jsonrpc": "2.0", "method": "notifications/initialized"}
+                    self._process.stdin.write(json.dumps(notif) + "\n")
+                    self._process.stdin.flush()
+
                 self._is_initialized = True
-                logger.info("Spotify MCP adapter process spawned (PID: %d)", self._process.pid)
+                logger.info("Spotify MCP adapter initialized and ready (PID: %d)", self._process.pid)
                 return True
             except Exception as e:
                 logger.error("Failed to spawn Spotify MCP process: %s", e)
@@ -232,6 +293,7 @@ class SpotifyMCPAdapter(MusicProvider):
                     self._process.kill()
                 finally:
                     self._process = None
+            self._stdout_queue = None
             self._is_initialized = False
 
     def is_available(self) -> bool:
@@ -312,12 +374,13 @@ class SpotifyMCPAdapter(MusicProvider):
                 self._process.stdin.write(line)
                 self._process.stdin.flush()
 
-                resp_line = self._process.stdout.readline()
+                # Read with deadline timeout
+                resp_line = self._readline_timeout(timeout=10.0)
                 if not resp_line:
-                    logger.error("Spotify MCP process exited unexpectedly or closed pipe.")
+                    logger.error("Spotify MCP request timed out or pipe returned empty.")
                     return {
                         "isError": True,
-                        "content": [{"type": "text", "text": "Spotify MCP server returned empty response"}],
+                        "content": [{"type": "text", "text": "Spotify MCP request timed out after 10.0s"}],
                     }
 
                 resp_json = json.loads(resp_line.strip())
@@ -523,7 +586,7 @@ class SpotifyMCPAdapter(MusicProvider):
         mcp_res: Dict[str, Any],
         action: PlaybackAction,
     ) -> PlaybackResult:
-        is_error = mcp_res.get("isError", False)
+        is_error = mcp_res.get("isError", mcp_res.get("is_error", False))
         text = self._extract_text(mcp_res)
 
         if is_error:
@@ -547,9 +610,28 @@ class SpotifyMCPAdapter(MusicProvider):
                 error_code=error_code,
             )
 
+        # Retain ACCEPTED_UNVERIFIED status when verified is explicitly False or unverified in content
+        is_verified = mcp_res.get("verified")
+        lower_text = text.lower()
+        if (
+            is_verified is False
+            or "unverified" in lower_text
+            or "accepted_unverified" in lower_text
+            or "not yet verified" in lower_text
+            or "verification pending" in lower_text
+        ):
+            return PlaybackResult(
+                success=False,
+                status=MusicStatus.ACCEPTED_UNVERIFIED,
+                message=text or "Spotify request accepted; playback verification pending",
+                action=action,
+                details={"verified": False},
+            )
+
         return PlaybackResult(
             success=True,
             status=MusicStatus.PLAYBACK_VERIFIED,
             message=text or "Operation succeeded",
             action=action,
+            details={"verified": True},
         )

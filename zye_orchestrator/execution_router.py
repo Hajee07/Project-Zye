@@ -195,16 +195,28 @@ class ZyeMCPExecutionRouter:
             runtime.decrement_in_flight()
 
     def _parse_mcp_result(self, result: Any, tool_name: str) -> dict[str, Any]:
-        """Parse an MCP CallToolResult into a dict."""
+        """Parse an MCP CallToolResult into a normalized result dict preserving error semantics."""
         try:
-            is_error = getattr(result, "isError", False)
-            content = getattr(result, "content", [])
+            # Check for error indicator across both MCP v2 (is_error) and v1 wire (isError)
+            is_error = False
+            if hasattr(result, "is_error"):
+                is_error = bool(result.is_error)
+            elif hasattr(result, "isError"):
+                is_error = bool(result.isError)
+            elif isinstance(result, dict):
+                is_error = bool(result.get("is_error", result.get("isError", False)))
 
-            # Extract text content
+            content = getattr(result, "content", [])
+            if isinstance(result, dict) and not content:
+                content = result.get("content", [])
+
+            # Extract text content and structured blocks
             text_parts = []
             for item in (content or []):
                 if hasattr(item, "text"):
                     text_parts.append(item.text)
+                elif isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
 
             combined = "\n".join(text_parts) if text_parts else ""
 
@@ -214,6 +226,7 @@ class ZyeMCPExecutionRouter:
                     "code": "TOOL_RETURNED_ERROR",
                     "tool_name": tool_name,
                     "message": combined or "Tool returned an error",
+                    "is_error": True,
                 }
 
             # Try to parse as JSON for structured results
@@ -222,7 +235,12 @@ class ZyeMCPExecutionRouter:
                     import json
                     parsed = json.loads(combined)
                     if isinstance(parsed, dict):
-                        parsed.setdefault("status", "success")
+                        # Preserve existing error / failure / blocked statuses
+                        if "status" not in parsed:
+                            if parsed.get("is_error") or parsed.get("isError") or "error" in parsed:
+                                parsed["status"] = "error"
+                            else:
+                                parsed["status"] = "success"
                         return parsed
                 except (ValueError, TypeError):
                     pass

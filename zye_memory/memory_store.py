@@ -53,20 +53,43 @@ class FactStore:
 
     def __init__(self, db_path: str = "data/memory.db") -> None:
         self.db_path = db_path
-        if self.db_path != ":memory:":
+        self._shared_conn: Optional[sqlite3.Connection] = None
+        if self.db_path == ":memory:":
+            # ZYE-BUG-015: Retain persistent connection for :memory: databases so schema survives
+            self._shared_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            self._shared_conn.row_factory = sqlite3.Row
+        else:
             os.makedirs(os.path.dirname(os.path.abspath(self.db_path)), exist_ok=True)
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._init_db()
 
     @contextlib.contextmanager
     def _connection(self):
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        try:
-            yield conn
-            conn.commit()
-        finally:
-            conn.close()
+        if self._shared_conn is not None:
+            with self._lock:
+                try:
+                    yield self._shared_conn
+                    self._shared_conn.commit()
+                except Exception:
+                    self._shared_conn.rollback()
+                    raise
+        else:
+            conn = sqlite3.connect(self.db_path, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            try:
+                yield conn
+                conn.commit()
+            finally:
+                conn.close()
+
+    def close(self) -> None:
+        """Close shared connection if open."""
+        if self._shared_conn is not None:
+            try:
+                self._shared_conn.close()
+            except Exception:
+                pass
+            self._shared_conn = None
 
     def _init_db(self) -> None:
         with self._lock, self._connection() as conn:
@@ -117,6 +140,34 @@ class FactStore:
                 (fact.id, fact.content, fact.source, fact.confidence, fact.created_at, fact.updated_at, tags_json),
             )
         return fact
+
+    def get_fact(self, fact_id: str) -> Optional[Fact]:
+        """Retrieve a specific fact by ID."""
+        with self._lock, self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT id, content, source, confidence, created_at, updated_at, access_count, tags
+                FROM facts
+                WHERE id = ?;
+                """,
+                (fact_id,),
+            ).fetchone()
+            if not row:
+                return None
+            try:
+                tags = json.loads(row["tags"])
+            except Exception:
+                tags = []
+            return Fact(
+                id=row["id"],
+                content=row["content"],
+                source=row["source"],
+                confidence=row["confidence"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                access_count=row["access_count"],
+                tags=tags,
+            )
 
     def search_facts(self, query: str, limit: int = 10) -> List[Fact]:
         """Simple substring search across facts."""
